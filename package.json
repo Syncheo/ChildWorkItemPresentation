@@ -1,0 +1,33 @@
+{
+	"name": "fr.syncheo.ewm.childitem.presentation",
+	"version": "1.0.0",
+	"description": "Html Table that shows some attributes of child workitems",
+	"scripts": {
+		"build": "webpack --config ./webpack.config.js --mode production"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Syncheo/ChildWorkItemPresentation.git"
+	},
+	"keywords": [
+		"jazz",
+		"rtc",
+		"workitem"
+	],
+	"author": "Lukas Steiger, Siemens AG",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Syncheo/ChildWorkItemPresentation/issues"
+	},
+	"homepage": "http://www.syncheo.tech",
+	"dependencies": {
+		"jazz-update-site-webpack-plugin": "latest",
+		"webpack": "latest"
+	},
+	"devDependencies": {
+		"@actions/core": "^1.10.0",
+		"disable-output-webpack-plugin": "^1.0.1",
+		"remove-files-webpack-plugin": "^1.4.0",
+		"webpack-cli": "^3.3.12"
+	}
+}

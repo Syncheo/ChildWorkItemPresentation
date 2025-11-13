@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: fr.syncheo.ewm.childitem.presentation;singleton:=true
+Bundle-Name: Child Workitem HTML Table
+Bundle-Version: 1.0.0
+Require-Bundle: 
+ net.jazz.ajax;bundle-version="6.1.0",
+ com.ibm.team.workitem.service
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Vendor: Syncheo Tech

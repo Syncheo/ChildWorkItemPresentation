@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+    <extension point="net.jazz.ajax.webBundles">
+		<alias value="fr.syncheo.ewm.childitem.presentation"></alias>
+    </extension>
+
+   <extension point="net.jazz.ajax.cssBindingSets">
+      <cssBindingSet 
+            id="fr.syncheo.ewm.childitem.presentation.ui.CSSBindingSet"
+            path="/ui/templates">
+         <cssBinding jsModule="fr.syncheo.ewm.childitem.presentation.ui.Presentation">
+            <cssModule path="/Presentation.css"></cssModule>
+         </cssBinding>
+      </cssBindingSet>
+   </extension>
+   
+   <extension
+         id="fr.syncheo.ewm.childitem"
+         name="Child Workitem HTML Table"
+         point="com.ibm.team.workitem.service.editorPresentations">
+      <editorPresentation
+            id="fr.syncheo.ewm.childitem.presentation"
+            needsAttribute="false"
+            widget="fr.syncheo.ewm.childitem.presentation.ui.Presentation">
+      </editorPresentation>
+   </extension>
+</plugin>

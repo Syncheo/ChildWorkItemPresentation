@@ -1,0 +1,9 @@
+<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js"></script>
+<script>
+  require(["fr/syncheo.ewm.childitem.presentation.ui.Presentation"], function(Presentation){
+      var widget = new Presentation();
+      widget.buildRendering();
+      document.body.appendChild(widget.domNode);
+      widget.startup();
+  });
+</script>

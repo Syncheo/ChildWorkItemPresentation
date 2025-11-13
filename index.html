@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>EWM Debug</title>
+    <link rel="stylesheet" href="dojo/resources/dojo.css">
+    <link rel="stylesheet" href="dojo/dijit/themes/claro/claro.css">
+    <script>
+        var dojoConfig = {
+            async: true,
+            parseOnLoad: true,
+            packages: [
+                { name: "js", location: "js" },
+                { name: "dojo", location: "dojo" },
+                { name: "dijit", location: "dojo/dijit" }
+            ]
+        };
+    </script>
+    <script src="dojo/dojo/dojo.js"></script>
+</head>
+<body class="claro">
+    <div id="presentationContainer"></div>
+
+    <script>
+        require([
+            "js/Presentation",
+            "dojo/dom-construct"
+        ], function(Presentation, domConstruct){
+            // Mock JAZZ et XHR pour tester localement
+            window.JAZZ = {
+                getApplicationBaseUrl: () => "http://localhost/mock/"
+            };
+
+            window.XHR = {
+                oslcXmlGetRequest: (url) => {
+                    return new Promise((resolve) => {
+                        const parser = new DOMParser();
+                        const xml = `
+                            <children>
+                                <id>1</id>
+                                <summary>Test summary 1</summary>
+                                <state><name>Open</name></state>
+                                <owner><name>John Doe</name></owner>
+                            </children>
+                            <children>
+                                <id>2</id>
+                                <summary>Test summary 2</summary>
+                                <state><name>Closed</name></state>
+                                <owner><name>Jane Smith</name></owner>
+                            </children>
+                        `;
+                        resolve(parser.parseFromString(xml, "text/xml"));
+                    });
+                }
+            };
+
+            // Crée un workItem factice
+            const workItem = {
+                id: 123,
+                itemId: "abc-123",
+            };
+
+            // Instancie Presentation
+            const presentation = new Presentation({
+                workItem: workItem,
+                presentation: { properties: [] }
+            });
+            presentation.placeAt("presentationContainer");
+            presentation.startup();
+        });
+    </script>
+</body>
+</html>
