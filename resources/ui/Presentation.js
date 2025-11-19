@@ -14,9 +14,11 @@ define([
 	"./XhrHelpers",
 	"./JazzHelpers",
 	"./ChildRow",
+	"./ChildHeader",
 	"dojo/text!./templates/Presentation.html",
 	"dojo/domReady!"
-], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Tooltip, Deferred, on, all, query, domConstruct, domStyle, XHR, JAZZ, ChildRow, template) {
+], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Tooltip, 
+		Deferred, on, all, query, domConstruct, domStyle, XHR, JAZZ, ChildRow, ChildHeader, template) {
 
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.Presentation",
 	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin],
@@ -43,7 +45,7 @@ define([
 		    "Resolution Date": "resolutionDate",
 		    "Resolved By": "resolver/name",
 		    "Severity": "severity/name",
-		    "Status": "state/name",
+		    "State": "state/name",
 		    "Start Date": "plannedStartDate",
 		    "Subscribed By": "subscriptions/name",
 		    "Summary": "summary",
@@ -57,7 +59,7 @@ define([
 		instanceID: null,
 		attributes: [],
 		restAttributes: ["type/name", "id" ,"summary", "state/name", "owner/name"],
-		attributeName: ["ID" ,"Summary", "State", "Owned By"],
+		attributeName: ["Type", "Id" ,"Summary", "State", "Owned By"],
 		
 		conf: null,
 		itemId: null,
@@ -90,13 +92,29 @@ define([
 					var property = properties[i];
 					if (property.key == "attributes") {
 						this.attributes = this.splitByComma(property.value);
-						if (this.keyExists(property.key)) {
-							this.restAttributes.push(this.wellKnownAttributes[property.key]);
-						} else {
-							this.restAttributes.push("allExtensions/(displayName|displayValue|type)");
+
+
+						for (var i = 0; i < this.attributes.length; i += 1) {
+						 	var attribut = this.attributes[i];
+							if (!this.attributeName.includes(attribut)) {
+								this.attributeName.push(attribut);
+							}
+						}
+
+						
+						for (var i = 0; i < this.attributes.length; i += 1) {
+							var attribut = this.attributes[i];
+							if (this.keyExists(attribut)) {
+								if (!this.restAttributes.includes(this.getWellKnownAttribute(attribut))) {
+									this.restAttributes.push(this.getWellKnownAttribute(attribut));
+								}								
+							} else {
+								if (!this.restAttributes.includes("allExtensions/(displayName|displayValue|type)")) {
+									this.restAttributes.push("allExtensions/(displayName|displayValue|type)");
+								}
+							}
 						}
 					}
-
 					conf[property.key] = property.value;
 				}
 			}
@@ -106,16 +124,14 @@ define([
 
 		createChildTable: function (workItemId) {
 			var self = this;
-
-
 			
-			var childsUrl = JAZZ.getApplicationBaseUrl() 
-				+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]"
-				 + "/children/(type/name|id|summary|state/name|owner/name)";
-				
 			//var childsUrl = JAZZ.getApplicationBaseUrl() 
-			//		+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]" +
-			//		"/children/("+ this.joinWithPipe(this.restAttributes) +  ")";
+			//	+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]"
+			//	+ "/children/(type/name|id|summary|state/name|owner/name)";
+				
+			var childsUrl = JAZZ.getApplicationBaseUrl() 
+					+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]" +
+					"/children/(itemId|"+ self.joinWithPipe(this.restAttributes) +  ")";
 											
 							
 			var childDfd = new Deferred();
@@ -124,31 +140,55 @@ define([
 
 			XHR.oslcXmlGetRequest(childsUrl).then(function (data) {
 				var children = data.getElementsByTagName("children");
-
+				
 				for (var i = 0; i < children.length; i++) {
-					var id = children[i].getElementsByTagName("id")[0].textContent;
-					var summary = children[i].getElementsByTagName("summary")[0].textContent;
-					var stateName = children[i].getElementsByTagName("state")[0].getElementsByTagName("name")[0].textContent;
-					var ownerName = children[i].getElementsByTagName("owner")[0].getElementsByTagName("name")[0].textContent;
-					var type = children[i].getElementsByTagName("type")[0].getElementsByTagName("name")[0].textContent;
+					var object = {};
+					var child = children[i];
+					object.itemId = child.getElementsByTagName("itemId")[0].textContent
+					
+						
+					for (var j = 0; j < self.attributeName.length; j += 1) {
+						var attribut = self.attributeName[j];
+						var rest = "";
+						
+						if (self.keyExists(attribut)) rest = self.getWellKnownAttribute(attribut);
+						else rest = "allExtensions/(displayName|displayValue|type)";
+						
+						if (rest.includes("allExtensions")) {
+							object[attribut] = self.getCustomAttributDisplayValue(child, attribut);
+						} else if (rest.includes("/")) {
+							object[attribut] = child.getElementsByTagName(rest.split("/")[0])[0].getElementsByTagName(rest.split("/")[1])[0].textContent	
+						} else {
+							object[attribut] = child.getElementsByTagName(rest)[0].textContent	
 
-					var url = JAZZ.getApplicationBaseUrl() + 
-						"resource/itemName/com.ibm.team.workitem.WorkItem/" + id;
-					console.log(id + " -> " + summary + " -> " + stateName + " -> " + url)		
-					self.childs[i] = {
+						}
+					}
+					
+					object["url"] = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + object.itemId;
+					console.log(object);
+					
+					//var id = children[i].getElementsByTagName("id")[0].textContent;
+					//var summary = children[i].getElementsByTagName("summary")[0].textContent;
+					//var stateName = children[i].getElementsByTagName("state")[0].getElementsByTagName("name")[0].textContent;
+					//var ownerName = children[i].getElementsByTagName("owner")[0].getElementsByTagName("name")[0].textContent;
+					//var type = children[i].getElementsByTagName("type")[0].getElementsByTagName("name")[0].textContent;
+
+					console.log(object.Id + " -> " + object.Summary + " -> " + object.State + " -> " + object.url)
+					self.childs[i] = object;	
+					/*elf.childs[i] = {
 						id: id,
 						summary: summary,
 						name: stateName,
 						owner: ownerName,
 						url: url, 
 						type: type
-					};
+					};*/
 				}
 
 				// sort states
 				self.childs.sort(function (a, b) {
-				    var ai = Number(a.id) || 0;
-				    var bi = Number(b.id) || 0;
+				    var ai = Number(a.Id) || 0;
+				    var bi = Number(b.Id) || 0;
 				    return ai - bi;
 				});
 
@@ -156,7 +196,9 @@ define([
 			});
 
 			all([childDfd]).then(function () {
-				self.processChilds(self.childs);
+				domConstruct.empty(self.childrenTable);
+				self.processHeader();
+				self.processChilds(self.childs, self.attributeName);
 			});
 		},
 
@@ -168,7 +210,15 @@ define([
 		 * @params allStates: {array} array of objects containing the work item state information
 		 */
 		
-		processChilds: function(allChilds) {
+		processHeader: function() {
+		    var self = this;
+			var ch = new ChildHeader(self.attributeName);
+			ch.placeAt(self.childrenHeader);
+			ch.startup();
+
+		},
+		
+		processChilds: function(allChilds, attributeNames) {
 		    var self = this;
 
 			console.log("All childs:", allChilds);
@@ -176,12 +226,9 @@ define([
 			console.log("childrenTable reference:", self.childrenTable);
 			console.log("childrenTable in DOM?", document.body.contains(self.childrenTable));
 
-		    // Vider le tbody
-		    domConstruct.empty(self.childrenTable);
-
 		    // Ajouter les nouvelles lignes
 		    for (var i = 0; i < allChilds.length; i++) {
-				var cr = new ChildRow(allChilds[i]);
+				var cr = new ChildRow(allChilds[i], attributeNames);
 				cr.placeAt(self.childrenTable);
 		        cr.startup();
 		    }
@@ -203,11 +250,25 @@ define([
 			return this.wellKnownAttributes.hasOwnProperty(key)
 		},
 		
+		getWellKnownAttribute: function (key) {
+			return this.wellKnownAttributes[key]
+		},
+		
 		joinWithPipe: function(arr) {
 		    if (!Array.isArray(arr)) {
 		        throw new Error("L'argument doit être un tableau");
 		    }
 		    return arr.join("|");
+		},
+		
+		 getCustomAttributDisplayValue: function(workItem, targetDisplayName) {
+		    var exts = workItem.getElementsByTagName("allExtensions");
+		    for (var i = 0; i < exts.length; i++) {
+		        if (exts[i].getElementsByTagName("displayName")[0].textContent === targetDisplayName) {
+		            return exts[i].getElementsByTagName("displayValue")[0].textContent;
+		        }
+		    }
+		    return '';
 		}
 
 	});

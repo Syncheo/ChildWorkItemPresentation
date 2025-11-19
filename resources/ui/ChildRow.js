@@ -14,20 +14,40 @@ define([
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 
 		templateString: template,
-		stateData: null,
+		childData: null,
+		headers: null,
 		
 
-		constructor: function (stateData) {
-			this.stateData = stateData;
+		constructor: function (childData, attributeNames) {
+			this.childData = childData;
+			this.headers = attributeNames;
 		},
 
 		postCreate: function() {
-			console.log(this.stateData);
+			console.log(this.childData);
             this.inherited(arguments);
 
-            if (!this.stateData) return;
+            if (!this.childData) return;
+			
+			var string = "<tr>";
+			string = string + "<td><a class=\"jazz-ui-ResourceLink\" href=" + this.childData.url + "\">" + 
+				this.childData.Type + " " + this.childData.Id + "</a></td>";
+				string = string + "<td><a class=\"jazz-ui-ResourceLink\" href=" + this.childData.url + "\">" + 
+								this.childData.Summary + "</a></td>";
+			
+			for (var i = 0; i < this.headers.length; i++) {
+				var h = this.headers[i];
+				if (h == "Type") continue;
+				if (h == "Id") continue;
+				if (h == "Summary") continue;
+				string = string + "<td>" + this.childData[h] + "</td>";	
+			}  
+			
+			string = string + "</tr>";
 
-            // Remplit les cellules
+			console.log(string)
+			this.childRow.innerHTML = string;
+           /* // Remplit les cellules
             this.idLink.href = this.stateData.url;
             this.idLink.innerHTML = this.stateData.type + " " + this.stateData.id;
 
@@ -36,6 +56,7 @@ define([
 
             this.stateCell.innerHTML = this.stateData.name;
             this.ownerCell.innerHTML = this.stateData.owner || "";
+			*/
 		},
 
         startup: function() {

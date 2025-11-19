@@ -1,6 +1,6 @@
 {
 	"name": "fr.syncheo.ewm.childitem.presentation",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Html Table that shows some attributes of child workitems",
 	"scripts": {
 		"build": "webpack --config ./webpack.config.js --mode production"
@@ -14,7 +14,7 @@
 		"rtc",
 		"workitem"
 	],
-	"author": "Lukas Steiger, Siemens AG",
+	"author": "Sany Maamari, Syncheo",
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/Syncheo/ChildWorkItemPresentation/issues"
