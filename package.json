@@ -1,6 +1,6 @@
 {
 	"name": "fr.syncheo.ewm.childitem.presentation",
-	"version": "1.0.1",
+	"version": "1.3.0",
 	"description": "Html Table that shows some attributes of child workitems",
 	"scripts": {
 		"build": "webpack --config ./webpack.config.js --mode production"
@@ -15,7 +15,7 @@
 		"workitem"
 	],
 	"author": "Sany Maamari, Syncheo",
-	"license": "MIT",
+	"license": "UNLICENSED",
 	"bugs": {
 		"url": "https://github.com/Syncheo/ChildWorkItemPresentation/issues"
 	},

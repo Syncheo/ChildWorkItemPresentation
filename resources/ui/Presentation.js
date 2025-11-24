@@ -21,45 +21,44 @@ define([
 		Deferred, on, all, query, domConstruct, domStyle, XHR, JAZZ, ChildRow, ChildHeader, template) {
 
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.Presentation",
-	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin],
-	{
+	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 		
-		wellKnownAttributes : {
-		    "Commentaires": "comments/content",
-		    "Durée": "correctedEstimate",
-		    "Created By": "creator/name",
-		    "Creation Date": "creationDate",
-		    "Description": "formattedDescription",
-		    "Due Date": "dueDate",
-		    "Estimate": "duration",
-		    "Filed Against": "category/name",
-		    "Found In": "foundIn/name",
-		    "Id": "id",
-		    "Modified By": "modifiedBy/name",
-		    "Modified Date": "modified",
-		    "Owned By": "owner/name",
-		    "Planned For": "target/name",
-		    "Priority": "priority/name",
-		    "Zone de projet": "projectArea/name",
-		    "Resolution": "resolution",
-		    "Resolution Date": "resolutionDate",
-		    "Resolved By": "resolver/name",
-		    "Severity": "severity/name",
-		    "State": "state/name",
-		    "Start Date": "plannedStartDate",
-		    "Subscribed By": "subscriptions/name",
-		    "Summary": "summary",
-		    "Tags": "tags", // à splitter par "|" si besoin
-		    "Time Spent": "timeSpent",
-		    "Type": "type/name"
-		},
+		wellKnownAttributes : [
+			{name: "Url", 				rest: "itemId", 				value: "", visible: true, editable: false, type: "string"},
+			{name: "Commentaires", 		rest: "comments/content", 		value: "", visible: false, editable: false, type: "array"},
+			{name: "Durée", 			rest: "correctedEstimate", 		value: "", visible: false, editable: "configurable", 	type: "integer"},
+			{name: "Created By", 		rest: "creator/name", 			value: "", visible: false, editable: false, type: "string"},
+			{name: "Creation Date",		rest: "creationDate", 			value: "", visible: false, editable: false, type: "timestamp"},
+			{name: "Description", 		rest: "formattedDescription", 	value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "Due Date", 			rest: "dueDate", 				value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+			{name: "Estimate", 			rest: "duration", 				value: "", visible: false, editable: "configurable", 	type: "integer"},
+			{name: "Filed Against", 	rest: "category/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "Found In", 			rest: "foundIn/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "Id", 				rest: "id", 					value: "", visible: true,  editable: false, type: "integer"},
+			{name: "Modified By", 		rest: "modifiedBy/name", 		value: "", visible: false, editable: false, type: "array"},
+			{name: "Modified Date", 	rest: "modified", 				value: "", visible: false, editable: false, type: "timestamp"},
+			{name: "Owned By", 			rest: "owner/name", 			value: "", visible: true,  editable: "configurable", 	type: "string"},
+			{name: "Planned For", 		rest: "target/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "Priority", 			rest: "priority/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "Zone de projet",	rest: "projectArea/name", 		value: "", visible: false, editable: false, type: "string"},
+			{name: "Resolution", 		rest: "resolution", 			value: "", visible: false, editable: "configurable",	type: "string"},
+			{name: "Resolution Date",	rest: "resolutionDate", 		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+			{name: "Resolved By", 		rest: "resolver/name", 			value: "", visible: false, editable: false, type: "string"},
+			{name: "Severity", 			rest: "severity/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
+			{name: "State", 			rest: "state/name", 			value: "", visible: true,  editable: "configurable", 	type: "string"},
+			{name: "Start Date", 		rest: "plannedStartDate", 		value: "", visible: false, editable: "configurable",	type: "timestamp"},
+			{name: "Subscribed By", 	rest: "subscriptions/name", 	value: "", visible: false, editable: false, type: "string"},
+			{name: "Summary", 			rest: "summary", 				value: "", visible: true,  editable: "configurable", 	type: "string"},
+			{name: "Tags", 				rest: "tags", 					value: "", visible: false, editable: "configurable", 	type: "pipearray"},
+			{name: "Time Spent", 		rest: "timeSpent", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
+			{name: "Type", 				rest: "type/name", 				value: "", visible: true,  editable: false, type: "string"}
+		],
 		
+		visibleAttributes: [],
 		templateString: template,
 		_classProperties: { instanceID: 0 },
 		instanceID: null,
 		attributes: [],
-		restAttributes: ["type/name", "id" ,"summary", "state/name", "owner/name"],
-		attributeName: ["Type", "Id" ,"Summary", "State", "Owned By"],
 		
 		conf: null,
 		itemId: null,
@@ -87,37 +86,51 @@ define([
 		setConfigurationProperties: function (args) {
 			var conf = {};
 			var properties = args.presentation.properties;
+
+			this.setVisibleAttributes();
+
 			if (typeof properties !== "undefined" && properties.length && properties.length > 0) {
-				for (var i = 0; i < properties.length; i++) {
-					var property = properties[i];
-					if (property.key == "attributes") {
-						this.attributes = this.splitByComma(property.value);
-
-
-						for (var i = 0; i < this.attributes.length; i += 1) {
-						 	var attribut = this.attributes[i];
-							if (!this.attributeName.includes(attribut)) {
-								this.attributeName.push(attribut);
-							}
+				var attributeProperties = properties.filter(function(p) {
+					return p.key === "attributes"
+				})
+				
+				if (attributeProperties !== null) {
+					var attributeProperty = attributeProperties[0];
+					var addedAttributes = this.splitByComma(attributeProperty.value);
+					for (var j = 0; j < addedAttributes.length; j++) {
+						var added = addedAttributes[j];
+						var configuredAttribut = this.getWellKnownAttributeByName(added);
+						if (configuredAttribut) {
+							configuredAttribut.visible = true;
+						} else {
+							configuredAttribut = {};
+							configuredAttribut.name = added;
+							configuredAttribut.visible = true;
+							configuredAttribut.editable = "configurable";
+							configuredAttribut.rest = "allExtensions/(displayName|displayValue|type)";
 						}
-
-						
-						for (var i = 0; i < this.attributes.length; i += 1) {
-							var attribut = this.attributes[i];
-							if (this.keyExists(attribut)) {
-								if (!this.restAttributes.includes(this.getWellKnownAttribute(attribut))) {
-									this.restAttributes.push(this.getWellKnownAttribute(attribut));
-								}								
-							} else {
-								if (!this.restAttributes.includes("allExtensions/(displayName|displayValue|type)")) {
-									this.restAttributes.push("allExtensions/(displayName|displayValue|type)");
-								}
-							}
-						}
+						this.visibleAttributes.push(configuredAttribut)
 					}
-					conf[property.key] = property.value;
+
+				}
+				
+				var editableProperties = properties.filter(function(p) {
+					return p.key === "editable"
+				})
+				
+				if (editableProperties !== null) {
+					var editableProperty = editableProperties[0];
+					var editableAttributes = this.splitByComma(editableProperty.value);
+
+					this.visibleAttributes = this.visibleAttributes.map(function(e) {
+						if (e.editable === "configurable")
+							if (editableAttributes.includes(e.name)) e.editable = true;
+							else e.editable = false;
+						return e;
+					})
 				}
 			}
+
 			return conf;
 		},
 
@@ -125,70 +138,70 @@ define([
 		createChildTable: function (workItemId) {
 			var self = this;
 			
+			self.childs = [];
+			
 			//var childsUrl = JAZZ.getApplicationBaseUrl() 
 			//	+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]"
 			//	+ "/children/(type/name|id|summary|state/name|owner/name)";
 				
 			var childsUrl = JAZZ.getApplicationBaseUrl() 
 					+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]" +
-					"/children/(itemId|"+ self.joinWithPipe(this.restAttributes) +  ")";
+					"/children/(" + self.joinWithPipe(self.visibleAttributes) +  ")";
 											
 							
 			var childDfd = new Deferred();
-			self.childs = [];
+			
 			
 
 			XHR.oslcXmlGetRequest(childsUrl).then(function (data) {
 				var children = data.getElementsByTagName("children");
 				
 				for (var i = 0; i < children.length; i++) {
-					var object = {};
-					var child = children[i];
-					object.itemId = child.getElementsByTagName("itemId")[0].textContent
+					var c = children[i];
+					var child = [];
 					
-						
-					for (var j = 0; j < self.attributeName.length; j += 1) {
-						var attribut = self.attributeName[j];
-						var rest = "";
-						
-						if (self.keyExists(attribut)) rest = self.getWellKnownAttribute(attribut);
-						else rest = "allExtensions/(displayName|displayValue|type)";
-						
-						if (rest.includes("allExtensions")) {
-							object[attribut] = self.getCustomAttributDisplayValue(child, attribut);
-						} else if (rest.includes("/")) {
-							object[attribut] = child.getElementsByTagName(rest.split("/")[0])[0].getElementsByTagName(rest.split("/")[1])[0].textContent	
+					for (var j = 0; j < self.visibleAttributes.length; j += 1) {
+						var childAttributes = {};
+						var attribut = self.visibleAttributes[j];
+						for(var k = 0; k < Object.keys(attribut).length; k++) {
+							childAttributes[Object.keys(attribut)[k]] = attribut[Object.keys(attribut)[k]];
+						}												
+						if (childAttributes.rest.includes("allExtensions")) {
+							var tt = self.getCustomAttributDisplayValue(c, childAttributes.name);
+							childAttributes.type = tt ? tt.type : "";
+							childAttributes.value = tt ? tt.value : "";
+						} else if (childAttributes.rest.includes("/")) {
+							childAttributes.value = c.getElementsByTagName(childAttributes.rest.split("/")[0])[0].getElementsByTagName(childAttributes.rest.split("/")[1])[0].textContent	
 						} else {
-							object[attribut] = child.getElementsByTagName(rest)[0].textContent	
+							var elemt = c.getElementsByTagName(childAttributes.rest)[0].textContent
+							if (childAttributes.rest === "itemId") elemt = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
+							childAttributes.value = elemt
 
 						}
+						child.push(childAttributes);
 					}
+					console.log(child)		
+					self.childs[i] = child;
 					
-					object["url"] = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + object.itemId;
-					console.log(object);
 					
 					//var id = children[i].getElementsByTagName("id")[0].textContent;
 					//var summary = children[i].getElementsByTagName("summary")[0].textContent;
 					//var stateName = children[i].getElementsByTagName("state")[0].getElementsByTagName("name")[0].textContent;
 					//var ownerName = children[i].getElementsByTagName("owner")[0].getElementsByTagName("name")[0].textContent;
 					//var type = children[i].getElementsByTagName("type")[0].getElementsByTagName("name")[0].textContent;
-
-					console.log(object.Id + " -> " + object.Summary + " -> " + object.State + " -> " + object.url)
-					self.childs[i] = object;	
-					/*elf.childs[i] = {
-						id: id,
-						summary: summary,
-						name: stateName,
-						owner: ownerName,
-						url: url, 
-						type: type
-					};*/
+	
 				}
 
 				// sort states
 				self.childs.sort(function (a, b) {
-				    var ai = Number(a.Id) || 0;
-				    var bi = Number(b.Id) || 0;
+					var childIda = a.filter(function(elmt) {
+						return elmt.name === "Id"
+					})[0];
+					var childIdb = b.filter(function(elmt) {
+						return elmt.name === "Id"
+					})[0];
+				    var ai = Number(childIda.value) || 0;
+				    var bi = Number(childIdb.value) || 0;
 				    return ai - bi;
 				});
 
@@ -196,9 +209,7 @@ define([
 			});
 
 			all([childDfd]).then(function () {
-				domConstruct.empty(self.childrenTable);
-				self.processHeader();
-				self.processChilds(self.childs, self.attributeName);
+				self.processChilds(self.childs);
 			});
 		},
 
@@ -209,32 +220,28 @@ define([
 		 * origin request's from client side
 		 * @params allStates: {array} array of objects containing the work item state information
 		 */
-		
-		processHeader: function() {
-		    var self = this;
-			var ch = new ChildHeader(self.attributeName);
-			ch.placeAt(self.childrenHeader);
-			ch.startup();
 
-		},
-		
-		processChilds: function(allChilds, attributeNames) {
+		processChilds: function(allChilds, attributeNames, editable) {
 		    var self = this;
 
 			console.log("All childs:", allChilds);
-			console.log("childrenTable children before loop:", self.childrenTable.childNodes.length);
-			console.log("childrenTable reference:", self.childrenTable);
-			console.log("childrenTable in DOM?", document.body.contains(self.childrenTable));
+			console.log("childrenTable reference:", self.childTable);
+			console.log("childrenTable in DOM?", document.body.contains(self.childTable));
 
-		    // Ajouter les nouvelles lignes
-		    for (var i = 0; i < allChilds.length; i++) {
-				var cr = new ChildRow(allChilds[i], attributeNames);
-				cr.placeAt(self.childrenTable);
-		        cr.startup();
-		    }
-			console.log(document.querySelector('tbody[data-dojo-attach-point="childrenTable"]').innerHTML);
-			console.log(dijit.registry.findWidgets(document.querySelector('tbody[data-dojo-attach-point="childrenTable"]')));
-
+			// Vider le tbody
+			domConstruct.empty(self.childrenHeader);
+			domConstruct.empty(self.childrenBody);
+			
+			var ch = new ChildHeader(self.visibleAttributes);
+			ch.placeAt(self.childrenHeader);
+			ch.startup();
+			
+			for (var i = 0; i < allChilds.length; i++) {
+				var cr = new ChildRow(allChilds[i]);
+				cr.placeAt(self.childrenBody);
+			    cr.startup();
+			}
+		
 		},
 		
 		splitByComma: function(str) {
@@ -245,7 +252,15 @@ define([
 		        return s.trim();
 		    });
 		},
-		
+
+		getWellKnownAttributeByName: function (key) {
+			for (var i = 0; i < this.wellKnownAttributes.length; i++) {
+				var attr = this.wellKnownAttributes[i]
+				if (attr.name === key) return attr;
+			} 
+			return null;
+		},
+			
 		keyExists: function (key) {
 			return this.wellKnownAttributes.hasOwnProperty(key)
 		},
@@ -258,18 +273,31 @@ define([
 		    if (!Array.isArray(arr)) {
 		        throw new Error("L'argument doit être un tableau");
 		    }
-		    return arr.join("|");
+			var rex = [];
+			for (var i = 0; i < arr.length; i++) {
+				if (!rex.includes(arr[i].rest)) rex.push(arr[i].rest)
+			}
+			
+		    return rex.join("|");
 		},
 		
-		 getCustomAttributDisplayValue: function(workItem, targetDisplayName) {
+		getCustomAttributDisplayValue: function(workItem, targetDisplayName) {
+			var obj = {}
 		    var exts = workItem.getElementsByTagName("allExtensions");
 		    for (var i = 0; i < exts.length; i++) {
 		        if (exts[i].getElementsByTagName("displayName")[0].textContent === targetDisplayName) {
-		            return exts[i].getElementsByTagName("displayValue")[0].textContent;
+					obj.value = exts[i].getElementsByTagName("displayValue")[0].textContent;
+					obj.type = exts[i].getElementsByTagName("type")[0].textContent;
+		            return obj;
 		        }
 		    }
-		    return '';
+		    return null;
+		},
+		
+		setVisibleAttributes: function() {
+			this.visibleAttributes = this.wellKnownAttributes.filter(function(e) {
+				return e.visible
+			});	
 		}
-
 	});
 });

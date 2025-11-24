@@ -14,32 +14,29 @@ define([
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildHeader", [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 
 		templateString: template,
-		headerNames: null,
+		childData: null,
 		
 
-		constructor: function (attributeNames) {
-			this.headerNames = attributeNames;
+		constructor: function (childData) {
+			this.childData = childData;
 		},
 
 		postCreate: function() {
-			console.log(this.headerNames);
+			console.log(this.childData);
             this.inherited(arguments);
 
-            if (!this.headerNames) return;
+            if (!this.childData) return;
 			
-			
-			
-			var string = "<tr>";
-			for (var i = 0; i < this.headerNames.length; i++) {
-				var h = this.headerNames[i];
-				if (h == "Type") continue;
-				string = string + "<th>" + h + "</th>";	
-			}  
-			string = string + "</tr>";
-			console.log(string);
-			
-			this.childHeader.innerHTML = string;
+			domConstruct.create("th", { innerHTML: "Id" }, this.childHeader);
+			domConstruct.create("th", { innerHTML: "Summary" }, this.childHeader);
 
+			for (var i = 0; i < this.childData.length; i++) {
+				var childElemt = this.childData[i]
+				if (childElemt.name === "Type" || childElemt.name === "Id" || 
+					childElemt.name === "Summary" || childElemt.name === "Url") continue;  
+				
+				domConstruct.create("th", { innerHTML: childElemt.name }, this.childHeader);
+			}
 		},
 
         startup: function() {
