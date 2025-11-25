@@ -24,35 +24,37 @@ define([
 	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 		
 		wellKnownAttributes : [
-			{name: "Url", 				rest: "itemId", 				value: "", visible: true, editable: false, type: "string"},
-			{name: "Commentaires", 		rest: "comments/content", 		value: "", visible: false, editable: false, type: "array"},
-			{name: "Durée", 			rest: "correctedEstimate", 		value: "", visible: false, editable: "configurable", 	type: "integer"},
-			{name: "Created By", 		rest: "creator/name", 			value: "", visible: false, editable: false, type: "string"},
-			{name: "Creation Date",		rest: "creationDate", 			value: "", visible: false, editable: false, type: "timestamp"},
-			{name: "Description", 		rest: "formattedDescription", 	value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "Due Date", 			rest: "dueDate", 				value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-			{name: "Estimate", 			rest: "duration", 				value: "", visible: false, editable: "configurable", 	type: "integer"},
-			{name: "Filed Against", 	rest: "category/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "Found In", 			rest: "foundIn/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "Id", 				rest: "id", 					value: "", visible: true,  editable: false, type: "integer"},
-			{name: "Modified By", 		rest: "modifiedBy/name", 		value: "", visible: false, editable: false, type: "array"},
-			{name: "Modified Date", 	rest: "modified", 				value: "", visible: false, editable: false, type: "timestamp"},
-			{name: "Owned By", 			rest: "owner/name", 			value: "", visible: true,  editable: "configurable", 	type: "string"},
-			{name: "Planned For", 		rest: "target/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "Priority", 			rest: "priority/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "Zone de projet",	rest: "projectArea/name", 		value: "", visible: false, editable: false, type: "string"},
-			{name: "Resolution", 		rest: "resolution", 			value: "", visible: false, editable: "configurable",	type: "string"},
-			{name: "Resolution Date",	rest: "resolutionDate", 		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-			{name: "Resolved By", 		rest: "resolver/name", 			value: "", visible: false, editable: false, type: "string"},
-			{name: "Severity", 			rest: "severity/name", 			value: "", visible: false, editable: "configurable", 	type: "string"},
-			{name: "State", 			rest: "state/name", 			value: "", visible: true,  editable: "configurable", 	type: "string"},
-			{name: "Start Date", 		rest: "plannedStartDate", 		value: "", visible: false, editable: "configurable",	type: "timestamp"},
-			{name: "Subscribed By", 	rest: "subscriptions/name", 	value: "", visible: false, editable: false, type: "string"},
-			{name: "Summary", 			rest: "summary", 				value: "", visible: true,  editable: "configurable", 	type: "string"},
-			{name: "Tags", 				rest: "tags", 					value: "", visible: false, editable: "configurable", 	type: "pipearray"},
-			{name: "Time Spent", 		rest: "timeSpent", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
-			{name: "Type", 				rest: "type/name", 				value: "", visible: true,  editable: false, type: "string"}
+{name: "Url", 				rest: "itemId", 																		value: "", visible: true,  editable: false, 			type: "string"},
+{name: "Commentaires", 		rest: "comments/content", 																value: "", visible: false, editable: false, 			type: "array"},
+{name: "Durée", 			rest: "correctedEstimate", 																value: "", visible: false, editable: "configurable", 	type: "integer"},
+{name: "Created By", 		rest: "creator/name", 																	value: "", visible: false, editable: false, 			type: "string"},
+{name: "Creation Date",		rest: "creationDate", 																	value: "", visible: false, editable: false, 			type: "timestamp"},
+{name: "Description", 		rest: "formattedDescription", 															value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Due Date", 			rest: "dueDate", 																		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+{name: "Estimate", 			rest: "duration", 																		value: "", visible: false, editable: "configurable", 	type: "integer"},
+{name: "Filed Against", 	rest: "category/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Found In", 			rest: "foundIn/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Id", 				rest: "id", 																			value: "", visible: true,  editable: false, 			type: "integer"},
+{name: "Modified By", 		rest: "modifiedBy/name", 																value: "", visible: false, editable: false, 			type: "array"},
+{name: "Modified Date", 	rest: "modified", 																		value: "", visible: false, editable: false, 			type: "timestamp"},
+{name: "Owned By", 			rest: "owner/name", 																	value: "", visible: true,  editable: "configurable", 	type: "string"},
+{name: "Planned For", 		rest: "target/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Priority", 			rest: "priority/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Zone de projet",	rest: "projectArea/name", 																value: "", visible: false, editable: false, 			type: "string"},
+{name: "Resolution", 		rest: "resolution", 																	value: "", visible: false, editable: "configurable",	type: "string"},
+{name: "Resolution Date",	rest: "resolutionDate", 																value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+{name: "Resolved By", 		rest: "resolver/name", 																	value: "", visible: false, editable: false, 			type: "string"},
+{name: "Severity", 			rest: "severity/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "State", 			rest: "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name)",	value: "", visible: true,  editable: "configurable", 	type: "enumeration"},
+{name: "Start Date", 		rest: "plannedStartDate", 																value: "", visible: false, editable: "configurable",	type: "timestamp"},
+{name: "Subscribed By", 	rest: "subscriptions/name", 															value: "", visible: false, editable: false, 			type: "string"},
+{name: "Summary", 			rest: "summary", 																		value: "", visible: true,  editable: "configurable", 	type: "string"},
+{name: "Tags", 				rest: "tags", 																			value: "", visible: false, editable: "configurable", 	type: "pipearray"},
+{name: "Time Spent", 		rest: "timeSpent", 																		value: "", visible: false, editable: "configurable", 	type: "duration"},
+{name: "Type", 				rest: "type/name", 																		value: "", visible: true,  editable: false, 			type: "string"}
 		],
+					
+		https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=11]/stateTransitions/(targetStateId|sourceProjectArea/states/*)
 		
 		visibleAttributes: [],
 		templateString: template,
@@ -77,6 +79,7 @@ define([
 		
 		postCreate: function() {
             this.inherited(arguments);
+			
             if (this.workItem && this.workItem.id > 0) {
                 this.createChildTable(this.workItem.id);
             }
@@ -242,6 +245,10 @@ define([
 			    cr.startup();
 			}
 		
+		},
+		
+		_onGlobalSave: function(evt) {
+		    console.log("👉 Le bouton SAVE global a été cliqué !");
 		},
 		
 		splitByComma: function(str) {

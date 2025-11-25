@@ -4,6 +4,7 @@
  */
 define([
     "dojo/_base/declare",
+	"dojo/_base/lang",
     "dijit/_WidgetBase",
     "dijit/_TemplatedMixin",
     "dijit/_WidgetsInTemplateMixin",
@@ -16,7 +17,7 @@ define([
     "dojo/dom-construct",
     "dojo/text!./templates/ChildRow.html"
 ], function (
-    declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
+    declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, TextBox, Select, DateTextBox, CheckBox,
     on, domConstruct, template) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
@@ -25,6 +26,8 @@ define([
 			
 			templateString: template,
 			childData: null,
+			changed: null,
+			url: null,
 			
 			
 			constructor: function (childData) {
@@ -32,33 +35,52 @@ define([
 			},
 	
 			postCreate: function () {
-				console.log(this.childData);
-				this.inherited(arguments);
+				var self = this;
+				self.changed = {};
 				
-				if (!this.childData) return;
+				console.log(self.childData);
+				self.inherited(arguments);
+				
+				if (!self.childData) return;
+					
+				// Lancer après un petit délai pour laisser Jazz rendre la page
+				setTimeout(function () {
+				    var globalSaveBtn = document.querySelector('button.j-button-primary[dojoattachpoint="saveCmd"]');
+
+				    if (globalSaveBtn) {
+				        self.own(
+				            on(globalSaveBtn, "click", function (evt) {
+				                self._onGlobalSave(evt);
+				            })
+				        );
+				    } else {
+				        console.warn("⚠️ Bouton Save global non trouvé !");
+				    }
+				}, 300);
 					
 				
-				var id = this.childData.filter(function(elmt) {
+				
+				var id = self.childData.filter(function(elmt) {
 						return elmt.name === "Id"
 				})[0];
-				var type = this.childData.filter(function(elmt) {
+				var type = self.childData.filter(function(elmt) {
 					return elmt.name === "Type"
 				})[0];
-				var summary = this.childData.filter(function(elmt) {
+				var summary = self.childData.filter(function(elmt) {
 					return elmt.name === "Summary"
 				})[0];
-				var url = this.childData.filter(function(elmt) {
+				this.url = self.childData.filter(function(elmt) {
 					return elmt.name === "Url"
 				})[0];
 
-				var td1 = domConstruct.create("td", {}, this.childRow);
+				var td1 = domConstruct.create("td", {}, self.childRow);
 				domConstruct.create("a", {
-					href: url.value,
+					href: this.url.value,
 					innerHTML: type.value + " " + id.value
 				}, td1);
 
 				// Cellule Summary
-				var td2 = domConstruct.create("td", {}, this.childRow);
+				var td2 = domConstruct.create("td", {}, self.childRow);
 				if( summary.editable) {
 					var container = domConstruct.create("div", { style: "width:100%;"}, td2);
 					var widget = new TextBox({value: summary.value }, container);
@@ -68,13 +90,22 @@ define([
 					    widget.focusNode.style.width = "100%";
 					    widget.focusNode.style.boxSizing = "border-box";
 					}
+					self.own(
+					    on(widget, "input", lang.hitch(self, function(evt) {
+					        console.log("Changement détecté :", widget.value);
+							var value = widget.get("value");           // valeur actuelle du TextBox
+							var fieldName = summary.name || "Summary"; // ou le nom de ton champ
+							this._onTextboxChanged(this.url.value, fieldName, value);
+					    }))
+					);
+					
 				} else {
-					domConstruct.create("a", { href: url.value, innerHTML: summary.value }, td2);	
+					domConstruct.create("a", { href: this.url.value, innerHTML: summary.value }, td2);	
 				}
 		
 
-				for (var i = 0; i < this.childData.length; i++) {
-					var childElemt = this.childData[i]
+				for (var i = 0; i < self.childData.length; i++) {
+					var childElemt = self.childData[i]
 					if (childElemt.name === "Type" || childElemt.name === "Id" || 
 						childElemt.name === "Summary" || childElemt.name === "Url") continue;
 					if (!childElemt.editable) {
@@ -91,6 +122,13 @@ define([
 						    widget.focusNode.style.width = "100%";
 						    widget.focusNode.style.boxSizing = "border-box";
 						}
+						this.own(
+							on(widget, "input", lang.hitch(this, function(evt) {
+								var value = widget.get("value");           			// valeur actuelle du TextBox
+								var fieldName = childElemt.name || "childElemt"; 	// ou le nom de ton champ
+								this._onTextboxChanged(this.url.value, fieldName, value);
+							}))
+						);
 					}
 				}
 			},
@@ -98,23 +136,20 @@ define([
 			startup: function () {
 			    this.inherited(arguments);
 			},
+			
+			_onTextboxChanged: function(url, fieldName, value) {
+				if (this.changed[url] === undefined) this.changed[url] = {};
+				this.changed[url][fieldName] = value;
+				console.log("Champ modifié :", url, ": " , fieldName, "->", value);
+			},
 
-		        /** BLOCKER D’EVENEMENTS EWM
-		         *  Empêche le dirty handler IBM de se déclencher
-		         */
-		/*        _blockIBMEvents: function (node) {
-		            var eventsToBlock = [
-		                "input", "change", "keydown", "keyup", "keypress",
-		                "paste", "cut", "compositionstart", "compositionend"
-		            ];
-
-		            eventsToBlock.forEach(function (ev) {
-		                node.addEventListener(ev, function (e) {
-		                    e.stopPropagation();    // empêche EWM de détecter
-		                }, true); // useCapture = true → bloque AVANT IBM
-		            });
-		        },
-		*/
+			_onGlobalSave: function(evt) {
+				if (Object.keys(this.changed).length !== 0) {
+					console.log("👉 Le bouton SAVE global a été cliqué !");
+					console.log("Changed : ", this.changed)
+				}
+			},
+			
             // --- Summary ---
    
 
