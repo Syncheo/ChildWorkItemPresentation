@@ -11,6 +11,8 @@ define([
     "dijit/Tooltip",
     "dijit/form/TextBox",
     "dijit/form/Select",
+	"dijit/form/ComboBox",
+	"dojo/store/Memory",
     "dijit/form/DateTextBox",
     "dijit/form/CheckBox",
     "dojo/on",
@@ -18,7 +20,7 @@ define([
     "dojo/text!./templates/ChildRow.html"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-    Tooltip, TextBox, Select, DateTextBox, CheckBox,
+    Tooltip, TextBox, Select, ComboBox, Memory, DateTextBox, CheckBox,
     on, domConstruct, template) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
@@ -26,12 +28,15 @@ define([
 			
 			templateString: template,
 			childData: null,
+			configurationElements: null,
 			changed: null,
 			url: null,
+			contextId: null,
 			
 			
-			constructor: function (childData) {
+			constructor: function (childData, configurationElements) {
 				this.childData = childData;
+				this.configurationElements = configurationElements;
 			},
 	
 			postCreate: function () {
@@ -69,13 +74,18 @@ define([
 				var summary = self.childData.filter(function(elmt) {
 					return elmt.name === "Summary"
 				})[0];
-				this.url = self.childData.filter(function(elmt) {
+				
+				self.url = self.childData.filter(function(elmt) {
 					return elmt.name === "Url"
+				})[0];
+				
+				self.contextId = self.childData.filter(function(elmt) {
+					return elmt.name === "contextId"
 				})[0];
 
 				var td1 = domConstruct.create("td", {}, self.childRow);
 				domConstruct.create("a", {
-					href: this.url.value,
+					href: self.url.value,
 					innerHTML: type.value + " " + id.value
 				}, td1);
 
@@ -95,40 +105,94 @@ define([
 					        console.log("Changement détecté :", widget.value);
 							var value = widget.get("value");           // valeur actuelle du TextBox
 							var fieldName = summary.name || "Summary"; // ou le nom de ton champ
-							this._onTextboxChanged(this.url.value, fieldName, value);
+							self._onTextboxChanged(self.url.value, fieldName, value);
 					    }))
 					);
 					
 				} else {
-					domConstruct.create("a", { href: this.url.value, innerHTML: summary.value }, td2);	
+					domConstruct.create("a", { href: self.url.value, innerHTML: summary.value }, td2);	
 				}
 		
 
 				for (var i = 0; i < self.childData.length; i++) {
 					var childElemt = self.childData[i]
 					if (childElemt.name === "Type" || childElemt.name === "Id" || 
-						childElemt.name === "Summary" || childElemt.name === "Url") continue;
+						childElemt.name === "Summary" || childElemt.name === "Url" || 
+						childElemt.name === "contextId"|| childElemt.name === "paContextId") continue;
 					if (!childElemt.editable) {
-						domConstruct.create("td", { innerHTML: childElemt.value }, this.childRow);
+						domConstruct.create("td", { innerHTML: childElemt.value }, self.childRow);
 					} else {
-						var td = domConstruct.create("td", {}, this.childRow);
+						var td = domConstruct.create("td", {}, self.childRow);
 						var container = domConstruct.create("div", { style: "width:100%;" }, td);
-
 						var widget = null;
-						widget = new TextBox({ value: childElemt.value }, container);
-						widget.startup();
-						widget.domNode.style.width = "100%";
-						if (widget.focusNode) {
-						    widget.focusNode.style.width = "100%";
-						    widget.focusNode.style.boxSizing = "border-box";
+						
+						/*
+						array, contributor, category, deliverable, iteration, resolution, state, 
+						*/
+						
+						/*
+						pipearray
+						*/
+						
+						/*string, integer, timestamp, duration*/
+						
+						var comboBoxArrays = ["array", "contributor", "category", "deliverable", "iteration", "resolution", "state", "enumeration"];
+						
+						
+
+						if (comboBoxArrays.includes(childElemt.type) ) {
+							
+							var options = [];
+							if (childElemt.type === "contributor") {
+								options = self.configurationElements[childElemt.type][self.contextId.value].map( function (c) {
+									return { label: c.name, value: c.id };	
+								});
+							} else {
+								options = self.configurationElements[childElemt.type].map( function (c) {
+									return { label: c.name, value: c.id };	
+								});
+							}
+							
+							var storeData = options.map(function(opt) { return { name: opt.label || opt, id: opt.value || opt }; });
+
+							var memoryStore = new Memory({ data: storeData, idProperty: "id" });
+							
+							
+							widget = new ComboBox({
+								value: childElemt.value, 
+								store: memoryStore, 
+								searchAttr: "name" }, container);							
+							widget.startup();
+							widget.domNode.style.width = "100%";
+							if (widget.focusNode) {
+							    widget.focusNode.style.width = "100%";
+							    widget.focusNode.style.boxSizing = "border-box";
+							}
+							self.own(
+								on(widget, "change", lang.hitch(self, function(value) {
+									var fieldName = childElemt.name || "childElemt";
+									var item = memoryStore.query({ name: value })[0]; 
+									var idToSend = item ? item.id : value;
+									
+									self._onTextboxChanged(this.url.value, fieldName, idToSend);
+								}))
+							);
+						} else {
+							widget = new TextBox({ value: childElemt.value }, container);
+							widget.startup();
+							widget.domNode.style.width = "100%";
+							if (widget.focusNode) {
+							    widget.focusNode.style.width = "100%";
+							    widget.focusNode.style.boxSizing = "border-box";
+							}
+							self.own(
+								on(widget, "input", lang.hitch(self, function(evt) {
+									var value = widget.get("value");           			// valeur actuelle du TextBox
+									var fieldName = childElemt.name || "childElemt"; 	// ou le nom de ton champ
+									self._onTextboxChanged(self.url.value, fieldName, value);
+								}))
+							);
 						}
-						this.own(
-							on(widget, "input", lang.hitch(this, function(evt) {
-								var value = widget.get("value");           			// valeur actuelle du TextBox
-								var fieldName = childElemt.name || "childElemt"; 	// ou le nom de ton champ
-								this._onTextboxChanged(this.url.value, fieldName, value);
-							}))
-						);
 					}
 				}
 			},

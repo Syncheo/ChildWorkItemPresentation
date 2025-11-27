@@ -33,8 +33,9 @@ define([
 			for (var i = 0; i < this.childData.length; i++) {
 				var childElemt = this.childData[i]
 				if (childElemt.name === "Type" || childElemt.name === "Id" || 
-					childElemt.name === "Summary" || childElemt.name === "Url") continue;  
-				
+					childElemt.name === "Summary" || childElemt.name === "Url" || 
+					childElemt.name === "contextId"|| childElemt.name === "paContextId") continue;
+		
 				domConstruct.create("th", { innerHTML: childElemt.name }, this.childHeader);
 			}
 		},
