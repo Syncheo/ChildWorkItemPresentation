@@ -101,7 +101,7 @@ define([
 					var addedAttributes = this.splitByComma(attributeProperty.value);
 					for (var j = 0; j < addedAttributes.length; j++) {
 						var added = addedAttributes[j];
-						var configuredAttribut = this.getWellKnownAttributeByName(added);
+						var configuredAttribut = this.deepClone(this.getWellKnownAttributeByName(added));
 						if (configuredAttribut) {
 							configuredAttribut.visible = true;
 						} else {
@@ -113,7 +113,6 @@ define([
 						}
 						this.visibleAttributes.push(configuredAttribut)
 					}
-
 				}
 				
 				var editableProperties = properties.filter(function(p) { return p.key === "editable" })
@@ -469,9 +468,34 @@ define([
 		},
 		
 		setVisibleAttributes: function() {
-			this.visibleAttributes = this.wellKnownAttributes.filter(function(e) {
-				return e.visible
-			});	
+			var self = this;
+			this.visibleAttributes = this.wellKnownAttributes
+				.filter(function(attr) { return attr.visible; })
+			    .map(function(attr) { return self.deepClone(attr); });
+		},
+		
+		deepClone: function(obj) {
+			var self = this;
+		    // Cas simple pour null, non-objets ou Date
+		    if (obj === null || typeof obj !== "object") return obj;
+		    if (obj instanceof Date) return new Date(obj);
+
+		    // Tableau
+		    if (Array.isArray(obj)) {
+		        return obj.map(function(item) {
+		            return self.deepClone(item);
+		        });
+		    }
+
+		    // Objet
+		    var cloned = {};
+		    for (var key in obj) {
+		        if (obj.hasOwnProperty(key)) {
+		            cloned[key] = self.deepClone(obj[key]);
+		        }
+		    }
+		    return cloned;
 		}
+		
 	});
 });

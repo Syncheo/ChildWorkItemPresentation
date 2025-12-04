@@ -10,9 +10,10 @@ define([
     "dojo/store/Memory",
 	"../XhrHelpers",
 	"../JazzHelpers",
-    "dojo/on"
+	"dojo/dom-construct",
+	"dojo/on"
 ], function(declare, ComboBox, Memory, 
-	XHR, JAZZ, on){
+	XHR, JAZZ, domConstruct, on){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CategoryCellBox", null, {
 
@@ -22,13 +23,18 @@ define([
 
         constructor: function(element, paContextId, onChange){
             this.element = element || {};
-			this.paContextId = paContextId || ""
+			this.paContextId = paContextId.value || ""
             this.onChange = onChange || function(){};
         },
 
         render: function(tdElement){
             var self = this;
 
+			var container = domConstruct.create("div", {
+			    style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
+			}, tdElement);
+
+			
             // Store temporaire vide au départ
             var store = new Memory({ data: [] });
 
@@ -38,11 +44,11 @@ define([
                 store: store,
                 searchAttr: "name",
                 autoComplete: false
-            }, tdElement);
+            }, container);
 
             combo.startup();
 			
-			self.getValues();
+			self.getValues(combo, self.paContextId);
 
             // Déclencher le callback onChange
             on(combo, "change", function(val){
@@ -57,10 +63,11 @@ define([
             });
         },
 		
-		
-		getValues: function(paContextId) {
+		getValues: function(combo, paContextId) {
+			var self = this;
+			
 			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-										"rpt/repository/workitem?fields=workitem/category[contextId=" + paContextId + "]/(id|name)";
+				"rpt/repository/workitem?fields=workitem/category[contextId=" + paContextId + "]/(id|name)";
 										
 			if (paContextId) {
 				XHR.oslcXmlGetRequest(categoryUrl).then(
@@ -85,6 +92,12 @@ define([
 					}
 				);
 			}
+		},
+		
+		getFirstTagText: function(element, tagName) {
+		    if (!element) return null;
+		    var n = element.getElementsByTagName(tagName);
+		    return (n && n[0] && n[0].textContent) || null;
 		}
     });
 

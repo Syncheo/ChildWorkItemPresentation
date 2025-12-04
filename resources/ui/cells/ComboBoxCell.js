@@ -44,18 +44,17 @@ define([
 
             widget.startup();
 
-            // Écoute du changement de valeur
-            on(widget, "change", function(val) {				
-				if (widget.focusNode) {
-				        var event = document.createEvent("HTMLEvents");
-				        event.initEvent("input", true, true);
-				        widget.focusNode.dispatchEvent(event);
-				    }
-					
-                if (typeof this.onChange === "function") {
-					this.onChange(val, this.element);
-                }
-            }.bind(this));
+			on(widget, "change", function(val) {
+			    // Marquer le widget comme dirty pour EWM
+			    widget._hasBeenBlurred = true; // simule blur pour forcer _isDirty
+			    widget._set("value", val);     // set la valeur réelle
+			    widget._isDirty = true;        // le flag interne
+			    widget.focusNode.dispatchEvent(new Event('change', { bubbles: true })); // event que EWM écoute
+
+			    // Callback utilisateur
+			    self.onChange(val, this.element);
+			});
+			
         }
 
     });

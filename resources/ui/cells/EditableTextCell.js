@@ -42,12 +42,15 @@ define([
             }
 
             // Écoute du changement de valeur
-            on(widget, "change", function () {
-				console.log("Valeur actuelle du TextBox :", widget.get("value"));
-				if (typeof this.onChange === "function") {
-				    this.onChange(widget.get("value"), this.element);
-				}
-            }.bind(this));
+			on(widget.focusNode, "input", function(evt) {
+			    var newValue = evt.target.value;  // valeur réellement saisie
+			    console.log("Nouvelle valeur :", newValue);
+
+			    if (typeof this.onChange === "function") {
+			        this.onChange(newValue, this.element);
+			    }
+			}.bind(this));
+			
 		}
 
     });
