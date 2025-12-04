@@ -19,12 +19,13 @@ define([
 	"./cells/StandardCell",
 	"./cells/LinkCell",
 	"./cells/EditableTextCell",
-	"./cells/ComboBoxCell"
+	"./cells/ComboBoxCell",
+	"./cells/CategoryCell"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, TextBox, Select, DateTextBox, CheckBox,
     on, domConstruct, template, 
-	StandardCell,  LinkCell, EditableTextCell, ComboBoxCell) {
+	StandardCell,  LinkCell, EditableTextCell, ComboBoxCell, CategoryCell) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 			
@@ -68,7 +69,9 @@ define([
 				var id = self.childData.filter(function(elmt) {	return elmt.name === "Id" })[0];
 				var type = self.childData.filter(function(elmt) { return elmt.name === "Type"	})[0];
 				var summary = self.childData.filter(function(elmt) { return elmt.name === "Summary" })[0];
-
+				var paContextId = self.childData.filter(function(elmt) { return elmt.name === "paContextId"	})[0];
+				var contextId = self.childData.filter(function(elmt) { return elmt.name === "contextId" })[0];
+					
 				self.url = self.childData.filter(function(elmt) { return elmt.name === "Url" })[0];
 				self.contextId = self.childData.filter(function(elmt) { return elmt.name === "contextId" })[0];
 
@@ -103,15 +106,11 @@ define([
 						var cell = new StandardCell(childElemt.value);
 					} else {
 						if (childElemt.type === "string" ) {
-							var cell = new EditableTextCell(childElemt.value, function(newValue) {
-							    var fieldName = childElemt.name || "childElemt.name";
-							    self._onTextboxChanged(self.url.value, fieldName, newValue);
-							});
-						} else if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
-							var cell = new ComboBoxCell(childElemt.value, childElemt.values, function(newValue) {
-								var fieldName = childElemt.name || "childElemt.name";
-								self._onTextboxChanged(self.url.value, fieldName, newValue);
-							});
+							var cell = new EditableTextCell(childElemt, self.callback.bind(self));
+						} else if (childElemt.type === "category" ) {
+							var cell = new CategoryCell(childElemt, paContextId, self.callback.bind(self));
+						} else  if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
+							var cell = new ComboBoxCell(childElemt, childElemt.values, self.callback.bind(self));
 						} else {
 							console.log(childElemt);
 						}
@@ -119,6 +118,13 @@ define([
 					}
 					cell.render(td);
 				}
+			},
+			
+			
+			callback: function(newValue, element) {
+				var self = this;
+				var fieldName = element.name || "childElemt.name";
+				self._onTextboxChanged(self.url.value, fieldName, newValue);
 			},
 			
 			startup: function () {
@@ -129,6 +135,8 @@ define([
 				if (this.changed[url] === undefined) this.changed[url] = {};
 				this.changed[url][fieldName] = value;
 				console.log("Champ modifié :", url, ": " , fieldName, "->", value);
+				console.log(this.changed);
+
 			},
 
 			_onGlobalSave: function(evt) {

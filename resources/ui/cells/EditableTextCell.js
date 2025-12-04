@@ -13,11 +13,11 @@ define([
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.EditableTextCell", null, {
 
-        value: "",
+        element: {},
         onChange: null, // callback quand la valeur change
 
-        constructor: function(value, onChange) {
-            this.value = value || "";
+        constructor: function(element, onChange) {
+			this.element = element || {};
             this.onChange = onChange || function() {};
         },
 
@@ -27,7 +27,7 @@ define([
             }, tdElement);
 
             var widget = new TextBox({
-                value: this.value
+                value: this.element.value || ""
             }, container);
 
             widget.startup();
@@ -42,11 +42,11 @@ define([
             }
 
             // Écoute du changement de valeur
-            on(widget, "input", function () {
-                var val = widget.get("value");
-                if (typeof this.onChange === "function") {
-                    this.onChange(val);
-                }
+            on(widget, "change", function () {
+				console.log("Valeur actuelle du TextBox :", widget.get("value"));
+				if (typeof this.onChange === "function") {
+				    this.onChange(widget.get("value"), this.element);
+				}
             }.bind(this));
 		}
 

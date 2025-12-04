@@ -14,12 +14,12 @@ define([
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ComboBoxCell", null, {
 
-        value: "",
+		element: {},
         options: [],       // tableau de valeurs simples ["High", "Medium", "Low"]
         onChange: null,    // callback quand la valeur change
 
-        constructor: function(value, options, onChange) {
-            this.value = value || "";
+        constructor: function(element, options, onChange) {
+            this.element = element || {};
             this.options = options || [];
             this.onChange = onChange || function() {};
         },
@@ -36,7 +36,7 @@ define([
             });
 
             var widget = new ComboBox({
-                value: this.value,
+                value: this.element.value,
                 store: store,
                 searchAttr: "name",
                 style: "width:100%; box-sizing:border-box;"
@@ -45,9 +45,15 @@ define([
             widget.startup();
 
             // Écoute du changement de valeur
-            on(widget, "change", function(val) {
+            on(widget, "change", function(val) {				
+				if (widget.focusNode) {
+				        var event = document.createEvent("HTMLEvents");
+				        event.initEvent("input", true, true);
+				        widget.focusNode.dispatchEvent(event);
+				    }
+					
                 if (typeof this.onChange === "function") {
-                    this.onChange(val);
+					this.onChange(val, this.element);
                 }
             }.bind(this));
         }
