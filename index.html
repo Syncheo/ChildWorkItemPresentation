@@ -2,72 +2,797 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>EWM Debug</title>
-    <link rel="stylesheet" href="dojo/resources/dojo.css">
-    <link rel="stylesheet" href="dojo/dijit/themes/claro/claro.css">
-    <script>
-        var dojoConfig = {
-            async: true,
-            parseOnLoad: true,
-            packages: [
-                { name: "js", location: "js" },
-                { name: "dojo", location: "dojo" },
-                { name: "dijit", location: "dojo/dijit" }
-            ]
-        };
-    </script>
-    <script src="dojo/dojo/dojo.js"></script>
+    <title>Test normalizeFieldValues</title>
 </head>
-<body class="claro">
-    <div id="presentationContainer"></div>
+<body>
+<script>
+    // Ton objet de données (simplifié ici pour l'exemple)
+    var data = [
+    	  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_9vUXsLohEfCoBvH4zpHzlA",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "8",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Sany Maamari",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "Resolved",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New",
+    		        "In Progress",
+    		        "Resolved"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Child Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "My filed custom attribute",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "",
+    		      "value": ""
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_OEqOcLoiEfCoBvH4zpHzlA",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "9",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Sany Maamari",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Child Item 2",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "My Test",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "",
+    		      "value": ""
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_l1UN4b_NEfCIXMPyoWwROA",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "10",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Sany Maamari",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Test435",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "string",
+    		      "value": ""
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "enumeration",
+    		      "value": "Enum 2",
+    		      "values": [
+    		        {
+    		          "id": "enum de test.literal.l1",
+    		          "name": "Enum 1"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l2",
+    		          "name": "Enum 2"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l3",
+    		          "name": "Enum 3"
+    		        }
+    		      ]
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_qPiqUMB5EfCCE_cYqA4rjg",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "11",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Unassigned",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "In Progress",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New",
+    		        "In Progress"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "test 45464",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "jjjj",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "enumeration",
+    		      "value": "Enum 2",
+    		      "values": [
+    		        {
+    		          "id": "enum de test.literal.l1",
+    		          "name": "Enum 1"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l2",
+    		          "name": "Enum 2"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l3",
+    		          "name": "Enum 3"
+    		        }
+    		      ]
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_qKpUsMCkEfCBeMVZyWpHGQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "12",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Sany Maamari",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Nouvel Enfant",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "",
+    		      "value": ""
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_w5kDwMCkEfCBeMVZyWpHGQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "13",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Unassigned",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "enfant par lien enfant",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "",
+    		      "value": ""
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_qP9DMcn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_4GEGsMCkEfCBeMVZyWpHGQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "14",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Unassigned",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Nouvelle tache",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Task",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "string",
+    		      "value": ""
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "",
+    		      "value": ""
+    		    }
+    		  ],
+    		  [
+    		    {
+    		      "name": "contextId",
+    		      "rest": "contextId",
+    		      "value": "_seDSccn_EfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "paContextId",
+    		      "rest": "projectArea/contextId",
+    		      "value": "_pG5nILDqEfC38tEFCAkmbQ",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Url",
+    		      "rest": "itemId",
+    		      "value": "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_3U1ZUMoAEfCv85lfWlrT8g",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Id",
+    		      "rest": "id",
+    		      "value": "15",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "integer"
+    		    },
+    		    {
+    		      "name": "Owned By",
+    		      "rest": "owner/name",
+    		      "value": "Unassigned",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "contributor"
+    		    },
+    		    {
+    		      "name": "State",
+    		      "rest": "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",
+    		      "value": "New",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "state",
+    		      "values": [
+    		        "New"
+    		      ]
+    		    },
+    		    {
+    		      "name": "Summary",
+    		      "rest": "summary",
+    		      "value": "Team 2 Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Type",
+    		      "rest": "type/name",
+    		      "value": "Defect",
+    		      "visible": true,
+    		      "editable": false,
+    		      "type": "string"
+    		    },
+    		    {
+    		      "name": "Custom Attribute",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "smallString",
+    		      "value": "",
+    		      "values": []
+    		    },
+    		    {
+    		      "name": "Mon Enum",
+    		      "visible": true,
+    		      "editable": true,
+    		      "rest": "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)",
+    		      "type": "enumeration",
+    		      "value": "Enum 1",
+    		      "values": [
+    		        {
+    		          "id": "enum de test.literal.l1",
+    		          "name": "Enum 1"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l2",
+    		          "name": "Enum 2"
+    		        },
+    		        {
+    		          "id": "enum de test.literal.l3",
+    		          "name": "Enum 3"
+    		        }
+    		      ]
+    		    }
+    		  ]
+    		];
 
-    <script>
-        require([
-            "js/Presentation",
-            "dojo/dom-construct"
-        ], function(Presentation, domConstruct){
-            // Mock JAZZ et XHR pour tester localement
-            window.JAZZ = {
-                getApplicationBaseUrl: () => "http://localhost/mock/"
-            };
+    // Fonction normalizeFieldValues en JS pur
+    function normalizeFieldValues(data, fieldName) {
+    	
 
-            window.XHR = {
-                oslcXmlGetRequest: (url) => {
-                    return new Promise((resolve) => {
-                        const parser = new DOMParser();
-                        const xml = `
-                            <children>
-                                <id>1</id>
-                                <summary>Test summary 1</summary>
-                                <state><name>Open</name></state>
-                                <owner><name>John Doe</name></owner>
-                            </children>
-                            <children>
-                                <id>2</id>
-                                <summary>Test summary 2</summary>
-                                <state><name>Closed</name></state>
-                                <owner><name>Jane Smith</name></owner>
-                            </children>
-                        `;
-                        resolve(parser.parseFromString(xml, "text/xml"));
-                    });
+    	var names = data[0].map(function(n) {
+    		return n.name;
+    	})
+    	
+    	names = names.filter(function (f) {
+    		var d = data[0].filter(function(g) { return g.name === f; })[0];
+    		return (d.editable);
+    	});
+
+
+        
+        	
+    	for (var i = 0; i < names.length; i++) {
+    		var name = names[i];
+    		var valueToUse = null;
+    		var valuesToUse = [];
+    		
+            for (var r = 0; r < data.length; r++) {
+                for (var c = 0; c < data[r].length; c++) {
+                    var item = data[r][c];
+                    if (item.name === name && item.type !== "") {
+                        valueToUse = item.type;
+                        valuesToUse = item.values;
+                        break;
+                    }
                 }
-            };
+                if (valueToUse !== null) break;
+            }
+            
+    		if (!valueToUse) valueToUse = "string";
+    		console.log(name, valueToUse);
+            for (var r2 = 0; r2 < data.length; r2++) {
+                for (var c2 = 0; c2 < data[r2].length; c2++) {
+                    var item2 = data[r2][c2];
+                    if (item2.name === name) {
+                        item2.type = valueToUse;
+                        item2.values = valuesToUse;
+                    }
+                }
+            }
+    	}
+    }
 
-            // Crée un workItem factice
-            const workItem = {
-                id: 123,
-                itemId: "abc-123",
-            };
+    // Test
+    console.log("Avant :",data);
+    normalizeFieldValues(data, "Mon Enum");
+    console.log("Après :", data);
 
-            // Instancie Presentation
-            const presentation = new Presentation({
-                workItem: workItem,
-                presentation: { properties: [] }
-            });
-            presentation.placeAt("presentationContainer");
-            presentation.startup();
-        });
-    </script>
+</script>
 </body>
 </html>

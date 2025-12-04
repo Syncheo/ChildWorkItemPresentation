@@ -41,12 +41,12 @@ define([
 {name: "Modified Date", 	rest: "modified", 																		value: "", visible: false, editable: false, 			type: "timestamp"},
 {name: "Owned By", 			rest: "owner/name", 																	value: "", visible: true,  editable: "configurable", 	type: "contributor"},
 {name: "Planned For", 		rest: "target/name", 																	value: "", visible: false, editable: "configurable", 	type: "iteration"},
-{name: "Priority", 			rest: "priority/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Priority", 			rest: "priority/name", 																	value: "", visible: false, editable: "configurable", 	type: "priority"},
 {name: "Zone de projet",	rest: "projectArea/name", 																value: "", visible: false, editable: false, 			type: "string"},
 {name: "Resolution", 		rest: "resolution", 																	value: "", visible: false, editable: "configurable",	type: "resolution"},
 {name: "Resolution Date",	rest: "resolutionDate", 																value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-{name: "Resolved By", 		rest: "resolver/name", 																	value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Severity", 			rest: "severity/name", 																	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Resolved By", 		rest: "resolver/name", 																	value: "", visible: false, editable: false, 			type: "constributor"},
+{name: "Severity", 			rest: "severity/name", 																	value: "", visible: false, editable: "configurable", 	type: "severity"},
 {name: "State", 			rest: "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",	value: "", visible: true,  editable: "configurable", 	type: "state"},
 {name: "Start Date", 		rest: "plannedStartDate", 																value: "", visible: false, editable: "configurable",	type: "timestamp"},
 {name: "Subscribed By", 	rest: "subscriptions/name", 															value: "", visible: false, editable: false, 			type: "contributor"},
@@ -55,16 +55,15 @@ define([
 {name: "Time Spent", 		rest: "timeSpent", 																		value: "", visible: false, editable: "configurable", 	type: "duration"},
 {name: "Type", 				rest: "type/name", 																		value: "", visible: true,  editable: false, 			type: "string"}
 		],
-		
+					
+		//https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=11]/stateTransitions/(targetStateId|sourceProjectArea/states/*)
 		
 		visibleAttributes: [],
-		configurationElements: {},
 		templateString: template,
 		_classProperties: { instanceID: 0 },
 		instanceID: null,
 		attributes: [],
 		
-		conf: null,
 		itemId: null,
 		childs: null,
 
@@ -75,7 +74,7 @@ define([
 			this.inherited(arguments, []);
 			this.templateString = template;
 			this.itemId = args.workItem.itemId;
-			this.conf = this.setConfigurationProperties(args);
+			this.setConfigurationProperties(args);
 			this.workItem = args.workItem;
 		},
 		
@@ -87,17 +86,15 @@ define([
             }
         },
 		
-
+		
 		setConfigurationProperties: function (args) {
-			var conf = {};
 			var properties = args.presentation.properties;
 
 			this.setVisibleAttributes();
 
 			if (typeof properties !== "undefined" && properties.length && properties.length > 0) {
-				var attributeProperties = properties.filter(function(p) {
-					return p.key === "attributes"
-				})
+				
+				var attributeProperties = properties.filter(function(p) { return p.key === "attributes" })
 				
 				for (var i = 0; i < attributeProperties.length; i++ ) {
 					var attributeProperty = attributeProperties[i];
@@ -112,17 +109,15 @@ define([
 							configuredAttribut.name = added;
 							configuredAttribut.visible = true;
 							configuredAttribut.editable = "configurable";
-							configuredAttribut.rest = "allExtensions/(displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)";							
+							configuredAttribut.rest = "allExtensions/(key|displayName|displayValue|type)|customAttributes/(identifier|attributeType|projectArea/enumerations/*/*)";							
 						}
 						this.visibleAttributes.push(configuredAttribut)
 					}
 
 				}
 				
-				var editableProperties = properties.filter(function(p) {
-					return p.key === "editable"
-				})
-				
+				var editableProperties = properties.filter(function(p) { return p.key === "editable" })
+									
 				for (var i = 0; i < editableProperties.length; i++ ) {
 					var editableProperty = editableProperties[i];
 					var editableAttributes = this.splitByComma(editableProperty.value);
@@ -136,10 +131,9 @@ define([
 				}
 			}
 
-			return conf;
+			this.visibleAttributes.forEach(function(e) { if (e.editable === "configurable") e.editable = false })
 		},
-
-
+		
 		createChildTable: function (workItemId) {
 			var self = this;
 			
@@ -161,236 +155,71 @@ define([
 			XHR.oslcXmlGetRequest(childsUrl).then(function (data) {
 				var children = data.getElementsByTagName("children");
 				
-				var allRowsPromises = [];
-				
 				for (var i = 0; i < children.length; i++) {
-					(function(index) {
 					var c = children[i];
 					var child = [];
-					var childPromises = []; // tableau pour collecter toutes les promesses de XHR
 					
 					for (var j = 0; j < self.visibleAttributes.length; j += 1) {
 						var childAttributes = {};
 						var attribut = self.visibleAttributes[j];
+						
 						for(var k = 0; k < Object.keys(attribut).length; k++) {
 							childAttributes[Object.keys(attribut)[k]] = attribut[Object.keys(attribut)[k]];
-						}					
-						
-						function getFirstTagText(element, tagName) {
-						    if (!element) return null;
-						    var n = element.getElementsByTagName(tagName);
-						    return (n && n[0] && n[0].textContent) || null;
 						}
-													
-						if (childAttributes.rest && childAttributes.rest.indexOf("allExtensions") !== -1) {
-							var tt = self.getCustomAttributDisplayValue(c, childAttributes.name);
+														
+						if (childAttributes.rest.includes("allExtensions")) {
+							var tt = self.getAllExtensionsDisplayValue(c, childAttributes.name);
 							childAttributes.type = tt ? tt.type : "";
 							childAttributes.value = tt ? tt.value : "";
-						} else if (childAttributes.rest && childAttributes.rest.indexOf("state") !== -1) {
-							
-	
-							var stateName = getFirstTagText(c.getElementsByTagName("state")[0], "name");
-							
-							var stateTransitions = Array.from(
-							    c.getElementsByTagName("stateTransitions") || []
-							);
-							
-							var targetStates = stateTransitions.map(function(st) {
-						        if (!st) return null;
-								var targetStateId = getFirstTagText(st, "targetStateId");
-								if (!targetStateId) return null;
+							var key = tt ? tt.key : null;
 
-								var sourceProjectArea = st.getElementsByTagName("sourceProjectArea")[0];
-								if (!sourceProjectArea) return null;
-
-								var states = Array.from(sourceProjectArea.getElementsByTagName("states") || []);
-								var matched = states.map(function(state) {
-									if (!state) return null;
-									var id = getFirstTagText(state, "id");
-									if (id !== targetStateId) return null;
-									return getFirstTagText(state, "name");
-								}).filter(function(x) { return x; }); // retire null/undefined
-								return matched[0] || null;
+							if (key) { // ✅ Vérification ESSENTIELLE
+								var enumerations = self.getCustomAttributesBykey(c, key);
+								childAttributes.type = enumerations ? enumerations.type : childAttributes.type;
+								childAttributes.values = enumerations ? enumerations.values : [];
+							}
+						} else if (childAttributes.rest.includes("state")) {
+							var stateName = self.getFirstTagText(c.getElementsByTagName("state")[0], "name");
+								
+								var stateTransitions = Array.from(
+								    c.getElementsByTagName("stateTransitions") || []
+								);
 							
-							}).filter(function(x) { return x; }); 
+								var targetStates = stateTransitions.map(function(st) {
+							        if (!st) return null;
+									var targetStateId = self.getFirstTagText(st, "targetStateId");
+									if (!targetStateId) return null;
+
+									var sourceProjectArea = st.getElementsByTagName("sourceProjectArea")[0];
+									if (!sourceProjectArea) return null;
+
+									var states = Array.from(sourceProjectArea.getElementsByTagName("states") || []);
+									var matched = states.map(function(state) {
+										if (!state) return null;
+										var id = self.getFirstTagText(state, "id");
+										if (id !== targetStateId) return null;
+										return self.getFirstTagText(state, "name");
+									}).filter(function(x) { return x; }); // retire null/undefined
+									return matched[0] || null;
+								
+								}).filter(function(x) { return x; }); 
 					
-	
-							if (!targetStates.includes(stateName)) targetStates.unshift(stateName);
-							childAttributes.value = stateName;
-							childAttributes.values = targetStates;
-							
+
+								if (!targetStates.includes(stateName)) targetStates.unshift(stateName);
+								childAttributes.value = stateName;
+								childAttributes.values = targetStates;
 						} else if (childAttributes.rest.includes("/")) {
-							var parts = childAttributes.rest.split("/"); 
-							var firstNode = c.getElementsByTagName(parts[0])[0]; 
-							var secondNode = firstNode ? firstNode.getElementsByTagName(parts[1])[0] : null; 
-							childAttributes.value = secondNode ? secondNode.textContent : "";							
+							childAttributes.value = c.getElementsByTagName(childAttributes.rest.split("/")[0])[0].getElementsByTagName(childAttributes.rest.split("/")[1])[0].textContent	
 						} else {
-							var elemtNode = c.getElementsByTagName(childAttributes.rest)[0]; 
-							var elemt = elemtNode ? elemtNode.textContent : ""; 
-							if (childAttributes.rest === "itemId") 
-								elemt = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt; 
-							childAttributes.value = elemt;
-						}
-						
-						if (!self.configurationElements) self.configurationElements= {};
-						
-						var paContextId = getFirstTagText(c.getElementsByTagName("projectArea")[0], "contextId");
-						
-						var contextIdNode = c.getElementsByTagName("contextId")[0]; 
-						var contextId = contextIdNode ? contextIdNode.textContent : "empty";
-						
-						
-						
-						if (childAttributes.type === "deliverable" && childAttributes.editable !== false) {
-							
-							if (!Array.isArray(self.configurationElements.deliverable) || self.configurationElements.deliverable.length === 0) {
-								var deliverablePromise = new Deferred(); 
-								self.configurationElements.deliverable = [];
-								
-								if (paContextId) {
-									var deliverableUrl = JAZZ.getApplicationBaseUrl() +
-										"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + paContextId + "]/(itemId|name)";
-									XHR.oslcXmlGetRequest(deliverableUrl).then(
-										function (data) {
-											var devNodes = data ? data.getElementsByTagName("deliverable") : [];
-											var dev = Array.from(devNodes || []);
-	
-											self.configurationElements.deliverable = dev.map(function(d) {
-												return {
-													id: getFirstTagText(d, "itemId"),
-													name: getFirstTagText(d, "name")
-												}
-											});
-											deliverablePromise.resolve();
-										},
-										function(err) {
-											console.error("Erreur chargement deliverable:", err);
-											deliverablePromise.resolve();
-										}
-									);
-								} else {
-									deliverablePromise.resolve();
-								}
-								childPromises.push(deliverablePromise);
-							}
-						}
-						
-						
-						if (childAttributes.type === "category" && childAttributes.editable !== false) {
-							if (!self.configurationElements) self.configurationElements= {};
-							if (!Array.isArray(self.configurationElements.category) || self.configurationElements.category.length === 0) {
-								var categoryPromise = new Deferred();
-								self.configurationElements.category = [];
-								
-								var paContextId = getFirstTagText(c.getElementsByTagName("projectArea")[0], "contextId");
+							var elemt = c.getElementsByTagName(childAttributes.rest)[0].textContent
+							if (childAttributes.rest === "itemId") elemt = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
+							childAttributes.value = elemt
 
-								
-								if (paContextId) {
-									var categoryUrl = JAZZ.getApplicationBaseUrl() +
-										"rpt/repository/workitem?fields=workitem/category[contextId=" + paContextId + "]/(id|name)";
-									XHR.oslcXmlGetRequest(categoryUrl).then(
-										function (data) {
-											var catNodes = data ? data.getElementsByTagName("category") : [];
-											var cat = Array.from(catNodes || []);
-	
-											self.configurationElements.category = cat.map(function(d) {
-												return {
-													id: getFirstTagText(d, "id"), 
-													name: (getFirstTagText(d, "name") || "").split("/").pop()
-												}
-											});
-											categoryPromise.resolve();
-										},
-										function(err) {
-											console.error("Erreur chargement deliverable:", err);
-											categoryPromise.resolve();
-										}
-									);
-								} else {
-									categoryPromise.resolve();
-								}
-								childPromises.push(categoryPromise);
-							}
 						}
-
-						
-						if (childAttributes.type === "contributor" && childAttributes.editable !== false) {
-							
-							if (!self.configurationElements.contributor) self.configurationElements.contributor = {};
-							
-							if (!self.configurationElements.contributor[contextId] || 
-							    self.configurationElements.contributor[contextId].length === 0) {
-								
-								if (contextId) {
-										
-									var contributorPromise = new Deferred();
-									self.configurationElements.contributor[contextId] = [];
-										
-									var contributorUrl = JAZZ.getApplicationBaseUrl() + 
-										"rpt/repository/foundation?fields=foundation/(" + 
-										"projectArea[itemId=" + contextId+ "]/teamMembers/(userId|name)|" + 
-										"teamArea[itemId="+ contextId+ "]/teamMembers/(userId|name))";
-										
-									XHR.oslcXmlGetRequest(contributorUrl).then(
-										function (data) {			
-											var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
-											var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
-											
-											
-											var paMembers = projectArea.map(function(pa) {
-												var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
-												return nodes.map(function (tm) {
-													return {
-														id: getFirstTagText(tm, "userId"), 
-														name: getFirstTagText(tm, "name")
-													}
-												});
-											});
-											
-											var taMembers = teamArea.map(function(ta) {
-												var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
-												return nodes.map(function (tm) {
-													return {
-														id: getFirstTagText(tm, "userId"), 
-														name: getFirstTagText(tm, "name")
-													}
-												});
-											});
-											
-											self.configurationElements.contributor[contextId] = [];
-											
-											for (var ii = 0; ii < paMembers.length; ii++) {
-											    self.configurationElements.contributor[contextId] = self.configurationElements.contributor[contextId].concat(paMembers[ii]);
-											}
-											for (var jj = 0; jj < taMembers.length; jj++) {
-												self.configurationElements.contributor[contextId] = self.configurationElements.contributor[contextId].concat(taMembers[jj]);
-											}
-											contributorPromise.resolve();
-										},
-										function(err) {
-											console.error("Erreur chargement deliverable:", err);
-											contributorPromise.resolve();
-										}
-									);
-								} else {
-									contributorPromise.resolve();
-								}
-								childPromises.push(contributorPromise);
-							}
-						}					
-
 						child.push(childAttributes);
 					}
-					
-					var rowPromise = all(childPromises).then(function() { 
-						console.log(child)
-						self.childs[index] = child; 
-					});
-					
-					allRowsPromises.push(rowPromise);
-					})(i);
-					
-	
+					console.log(child)		
+					self.childs[i] = child;
 					
 					
 					//var id = children[i].getElementsByTagName("id")[0].textContent;
@@ -414,13 +243,11 @@ define([
 				    return ai - bi;
 				});
 
-				all(allRowsPromises).then(function() { 
-					childDfd.resolve(); 
-				});
+				childDfd.resolve();
 			});
 
 			all([childDfd]).then(function () {
-				self.processChilds(self.childs, self.configurationElements);
+				self.processChilds(self.childs);
 			});
 		},
 
@@ -432,9 +259,13 @@ define([
 		 * @params allStates: {array} array of objects containing the work item state information
 		 */
 
-		processChilds: function(allChilds, configurationElements) {
+		processChilds: function(allChilds, attributeNames, editable) {
 		    var self = this;
+			
+			
 
+			self.normalizeFieldValues(allChilds);
+			
 			console.log("All childs:", allChilds);
 			console.log("childrenTable reference:", self.childTable);
 			console.log("childrenTable in DOM?", document.body.contains(self.childTable));
@@ -448,11 +279,129 @@ define([
 			ch.startup();
 			
 			for (var i = 0; i < allChilds.length; i++) {
-				var cr = new ChildRow(allChilds[i], configurationElements);
+				var cr = new ChildRow(allChilds[i]);
 				cr.placeAt(self.childrenBody);
 			    cr.startup();
 			}
 		
+		},
+		
+		normalizeFieldValues: function(data) {
+			
+			var names = data[0].map(function(n) {
+				return n.name;
+			})
+			
+			names = names.filter(function (f) {
+				var d = data[0].filter(function(g) { return g.name === f; })[0];
+				return (d.editable);
+			});
+
+		    	
+			for (var i = 0; i < names.length; i++) {
+				var name = names[i];
+				var valueToUse = null;
+				data.map(function(dataI) {
+					var item = dataI.filter(function(element) {
+						return element.name === name;
+					})[0];
+					if (item.type != "") valueToUse = item.type;
+				})
+				if (!valueToUse) valueToUse = "string";
+				if (valueToUse.toLowerCase().indexOf("string") !== -1) {
+					valueToUse = "string";
+				}
+				data = data.map(function(dataI) {
+					return dataI.map(function(dataJ) {
+						if (dataJ.name === name) {
+							dataJ.type = valueToUse;
+						}
+						return dataJ;
+					});
+				})
+			}
+		},
+		
+		getCustomAttributesBykey: function(workItem, key) {
+
+			var values = [];
+			var attributeType = "";
+			var customAttrs = Array.from(workItem.getElementsByTagName("customAttributes"));
+			
+			if (!customAttrs || customAttrs.length === 0) return { type:"", values:[] }; // ✅ Vérification ajoutée
+
+			var match = customAttrs.find(function(attr) {
+				var identifier = attr.getElementsByTagName("identifier")[0];
+				return identifier && identifier.textContent === key;
+			});
+
+			if (match) {
+				var attrTypeElement = match.getElementsByTagName("attributeType")[0];
+				if (attrTypeElement) { // ✅ Vérification ajoutée
+					attributeType = attrTypeElement.textContent;
+				}
+			}
+		
+			var projectArea = customAttrs[0].getElementsByTagName("projectArea")[0];
+			if (!projectArea) return { type:"", values:[] }; // ✅ Vérification ajoutée
+			 
+			var enums = Array.from(projectArea.getElementsByTagName("enumerations"));
+ 						
+			match = enums.find(function(attr) {
+				var id = attr.getElementsByTagName("id")[0];
+				return id && id.textContent === attributeType;
+			});
+
+			if (match) {
+				attributeType = "enumeration"
+				var literals = Array.from(match.getElementsByTagName("literals"));
+				values = literals.map(function(e) {
+					var idElem = e.getElementsByTagName("id")[0];
+					var nameElem = e.getElementsByTagName("name")[0];
+					if (!idElem || !nameElem) return null; // ✅ Sécurité
+					return {
+						id: idElem.textContent,
+						name: nameElem.textContent
+					}
+				}).filter(function(x) { return x; }); // ✅ Retire les null
+			}
+
+
+			return {
+				type: attributeType,
+				values: values
+			};
+
+		},
+				
+		
+		getAllExtensionsDisplayValue: function(workItem, targetDisplayName) {
+		    if (!workItem) return { value: "", type: "", key: "" };
+
+		    var exts = workItem.getElementsByTagName("allExtensions") || [];
+		    
+		    for (var i = 0; i < exts.length; i++) {
+		        var ext = exts[i];
+		        if (!ext) continue;
+
+		        var displayName = (ext.getElementsByTagName("displayName")[0] || {}).textContent || null;
+
+		        if (displayName === targetDisplayName) {
+		            return {
+		                value: (ext.getElementsByTagName("displayValue")[0] || {}).textContent || "",
+		                type:  (ext.getElementsByTagName("type")[0]         || {}).textContent || "",
+		                key:   (ext.getElementsByTagName("key")[0]          || {}).textContent || ""
+		            };
+		        }
+		    }
+
+		    return { value: "", type: "", key: "" };
+		},
+		
+		getFirstTagText: function(element, tagName) {
+		    if (!element) return null;
+		    var n = element.getElementsByTagName(tagName);
+		    return (n && n[0] && n[0].textContent) || null;
 		},
 		
 		_onGlobalSave: function(evt) {
