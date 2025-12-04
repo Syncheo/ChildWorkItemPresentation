@@ -173,18 +173,17 @@ define([
 							childAttributes.value = tt ? tt.value : "";
 							var key = tt ? tt.key : null;
 
-							if (key) { // ✅ Vérification ESSENTIELLE
+							if (key && childAttributes.editable) { // ✅ Vérification ESSENTIELLE
 								var enumerations = self.getCustomAttributesBykey(c, key);
 								childAttributes.type = enumerations ? enumerations.type : childAttributes.type;
 								childAttributes.values = enumerations ? enumerations.values : [];
 							}
 						} else if (childAttributes.rest.includes("state")) {
 							var stateName = self.getFirstTagText(c.getElementsByTagName("state")[0], "name");
-								
+							if (childAttributes.editable) {
 								var stateTransitions = Array.from(
 								    c.getElementsByTagName("stateTransitions") || []
 								);
-							
 								var targetStates = stateTransitions.map(function(st) {
 							        if (!st) return null;
 									var targetStateId = self.getFirstTagText(st, "targetStateId");
@@ -203,11 +202,15 @@ define([
 									return matched[0] || null;
 								
 								}).filter(function(x) { return x; }); 
-					
+
 
 								if (!targetStates.includes(stateName)) targetStates.unshift(stateName);
 								childAttributes.value = stateName;
 								childAttributes.values = targetStates;
+							}
+								
+							
+
 						} else if (childAttributes.rest.includes("/")) {
 							childAttributes.value = c.getElementsByTagName(childAttributes.rest.split("/")[0])[0].getElementsByTagName(childAttributes.rest.split("/")[1])[0].textContent	
 						} else {
@@ -288,37 +291,44 @@ define([
 		
 		normalizeFieldValues: function(data) {
 			
-			var names = data[0].map(function(n) {
-				return n.name;
-			})
-			
+			var names = data[0].map(function(n) { return n.name; })
+
 			names = names.filter(function (f) {
 				var d = data[0].filter(function(g) { return g.name === f; })[0];
 				return (d.editable);
 			});
 
-		    	
 			for (var i = 0; i < names.length; i++) {
 				var name = names[i];
 				var valueToUse = null;
-				data.map(function(dataI) {
-					var item = dataI.filter(function(element) {
-						return element.name === name;
-					})[0];
-					if (item.type != "") valueToUse = item.type;
-				})
+				var valuesToUse = [];
+				
+			    for (var r = 0; r < data.length; r++) {
+			        for (var c = 0; c < data[r].length; c++) {
+			            var item = data[r][c];
+			            if (item.name === name && item.type !== "") {
+			                valueToUse = item.type;
+			                valuesToUse = item.values;
+			                break;
+			            }
+			        }
+			        if (valueToUse !== null) break;
+			    }
+			    
 				if (!valueToUse) valueToUse = "string";
 				if (valueToUse.toLowerCase().indexOf("string") !== -1) {
 					valueToUse = "string";
 				}
-				data = data.map(function(dataI) {
-					return dataI.map(function(dataJ) {
-						if (dataJ.name === name) {
-							dataJ.type = valueToUse;
-						}
-						return dataJ;
-					});
-				})
+			
+			    for (var r2 = 0; r2 < data.length; r2++) {
+			        for (var c2 = 0; c2 < data[r2].length; c2++) {
+			            var item2 = data[r2][c2];
+			            if (item2.name === name) {
+			                item2.type = valueToUse;
+			                item2.values = valuesToUse;
+			            }
+			        }
+			    }
 			}
 		},
 		

@@ -745,18 +745,13 @@
     function normalizeFieldValues(data, fieldName) {
     	
 
-    	var names = data[0].map(function(n) {
-    		return n.name;
-    	})
+    	var names = data[0].map(function(n) { return n.name; })
     	
     	names = names.filter(function (f) {
     		var d = data[0].filter(function(g) { return g.name === f; })[0];
     		return (d.editable);
     	});
-
-
-        
-        	
+    	
     	for (var i = 0; i < names.length; i++) {
     		var name = names[i];
     		var valueToUse = null;

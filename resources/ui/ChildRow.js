@@ -102,12 +102,12 @@ define([
 					if (!childElemt.editable) {
 						var cell = new StandardCell(childElemt.value);
 					} else {
-						if (childElemt.type === "string") {
+						if (childElemt.type === "string" ) {
 							var cell = new EditableTextCell(childElemt.value, function(newValue) {
 							    var fieldName = childElemt.name || "childElemt.name";
 							    self._onTextboxChanged(self.url.value, fieldName, newValue);
 							});
-						} else if (childElemt.type === "enumeration") {
+						} else if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
 							var cell = new ComboBoxCell(childElemt.value, childElemt.values, function(newValue) {
 								var fieldName = childElemt.name || "childElemt.name";
 								self._onTextboxChanged(self.url.value, fieldName, newValue);
