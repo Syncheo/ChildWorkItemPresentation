@@ -68,7 +68,10 @@ define([
 		childs: null,
 
 		workItem: null,
-
+		_editorContext: null,
+		childRowWidgets: null, // Initialiser à null ou []
+		        
+				
 		constructor: function (args) {
 			this.instanceID = ++this._classProperties.instanceID;
 			this.inherited(arguments, []);
@@ -76,7 +79,7 @@ define([
 			this.itemId = args.workItem.itemId;
 			this.setConfigurationProperties(args);
 			this.workItem = args.workItem;
-		},
+			this._editorContext = args.parentController;		},
 		
 		postCreate: function() {
             this.inherited(arguments);
@@ -261,6 +264,17 @@ define([
 		processChilds: function(allChilds, attributeNames, editable) {
 		    var self = this;
 			
+			if (self.childRowWidgets) {
+			    self.childRowWidgets.forEach(function(widget) {
+			        // Utiliser destroyRecursive si vous êtes sûr que tous les enfants sont des Dijit
+			        // Sinon, utiliser destroy() (si ChildRow ne dérive que de _WidgetBase)
+			        if (widget && widget.destroy) { 
+			            widget.destroy();
+			        }
+			    });
+			}
+			self.childRowWidgets = []; // Réinitialiser pour stocker les nouvelles
+
 			
 
 			self.normalizeFieldValues(allChilds);
@@ -281,6 +295,8 @@ define([
 				var cr = new ChildRow(allChilds[i]);
 				cr.placeAt(self.childrenBody);
 			    cr.startup();
+				self.childRowWidgets.push(cr);
+						
 			}
 		
 		},

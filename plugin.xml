@@ -21,6 +21,10 @@
             <provides>
                 <providedService interface="fr.syncheo.ewm.childitem.server.IChildItemService"/>
             </provides>
+            <prerequisites>
+            	<requiredService interface="com.ibm.team.repository.service.IRepositoryItemService"/>
+            	<requiredService interface="com.ibm.team.workitem.service.IWorkItemServer" />
+            </prerequisites>    
         </serviceProvider>
     </extension>
 
