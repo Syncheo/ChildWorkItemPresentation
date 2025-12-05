@@ -115,7 +115,7 @@ define([
 							var cell = new CategoryCell(childElemt, paContextId, self.callback.bind(self));
 						
 						} else if (childElemt.type === "contributor" ) {
-							var cell = new CategoryCell(childElemt, contextId, self.callback.bind(self));
+							var cell = new ContributorCell(childElemt, contextId, self.callback.bind(self));
 						
 						} else if (childElemt.type === "deliverable" ) {
 							var cell = new DeliverableCell(childElemt, paContextId, self.callback.bind(self));

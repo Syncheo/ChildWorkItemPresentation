@@ -70,48 +70,45 @@ define([
 				"projectArea[itemId=" + contextId+ "]/teamMembers/(userId|name)|" + 
 				"teamArea[itemId="+ contextId+ "]/teamMembers/(userId|name))";
 				
-				
-			if (paContextId) {
-				XHR.oslcXmlGetRequest(contributorUrl).then(
-					function (data) {
-						
-						var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
-						var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
-																	
-						var paMembers = projectArea.map(function(pa) {
-							var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
-							return nodes.map(function (tm) {
-								return {
-									id: self.getFirstTagText(tm, "userId"), 
-									name: self.getFirstTagText(tm, "name")
-								}
-							});
-						});
-						
-						var taMembers = teamArea.map(function(ta) {
-							var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
-							return nodes.map(function (tm) {
-								return {
-									id: self.getFirstTagText(tm, "userId"), 
-									name: self.getFirstTagText(tm, "name")
-								}
-							});
-						});						
-																
-						
-						
-						var contributors = [];
-						contributors.push(paMembers);
-						contributors.push(taMembers);
+			XHR.oslcXmlGetRequest(contributorUrl).then(
+				function (data) {
+					
+					var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
+					var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
+					
+					
+					var paMembers = projectArea.reduce(function(acc, pa) {
+					    var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
+					    nodes.forEach(function(pm) {
+					        acc.push({
+					            id: self.getFirstTagText(pm, "userId"),
+					            name: self.getFirstTagText(pm, "name")
+					        });
+					    });
+					    return acc;
+					}, []);
 															
-						var newStore = new Memory({ data: contributors });
-						combo.set("store", newStore);  
-					}, 
-					function(err) {
-						console.error("Erreur chargement category:", err);
-					}
-				);
-			}
+					var taMembers = teamArea.reduce(function(acc, ta) {
+					    var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
+					    nodes.forEach(function(tm) {
+					        acc.push({
+					            id: self.getFirstTagText(tm, "userId"),
+					            name: self.getFirstTagText(tm, "name")
+					        });
+					    });
+					    return acc;
+					}, []);
+									
+					var contributors = [].concat(paMembers, taMembers);
+												
+					var newStore = new Memory({ data: contributors });
+					combo.set("store", newStore);  
+				}, 
+				function(err) {
+					console.error("Erreur chargement category:", err);
+				}
+			);
+			
 		},
 		
 		getFirstTagText: function(element, tagName) {

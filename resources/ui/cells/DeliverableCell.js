@@ -48,7 +48,7 @@ define([
 
             combo.startup();
 			
-			self.getValues(combo, self.contextId);
+			self.getValues(combo, self.paContextId);
 
             // Déclencher le callback onChange
             on(combo, "change", function(val){

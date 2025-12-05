@@ -207,11 +207,8 @@ define([
 								childAttributes.value = stateName;
 								childAttributes.values = targetStates;
 							}
-								
-							
-
 						} else if (childAttributes.rest.includes("/")) {
-							childAttributes.value = c.getElementsByTagName(childAttributes.rest.split("/")[0])[0].getElementsByTagName(childAttributes.rest.split("/")[1])[0].textContent	
+							childAttributes.value = self.getValueByNameAttribute(c, childAttributes.rest)
 						} else {
 							var elemt = c.getElementsByTagName(childAttributes.rest)[0].textContent
 							if (childAttributes.rest === "itemId") elemt = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
@@ -382,7 +379,27 @@ define([
 			};
 
 		},
-				
+
+		getValueByNameAttribute: function(c, rest) {
+			if (!rest || typeof rest !== "string") return "";
+			
+			var parts = rest.split("/");
+			
+			if (parts.length < 2) return "";
+
+			var tag1 = parts[0];
+			var tag2 = parts[1];
+			if (!c || typeof c.getElementsByTagName !== "function") return "";
+			
+			var elems1 = c.getElementsByTagName(tag1);
+			if (!elems1 || elems1.length === 0) return "";
+
+			var elems2 = elems1[0].getElementsByTagName(tag2);
+			if (!elems2 || elems2.length === 0) return "";
+			
+			var text = elems2[0].textContent;
+			return (typeof text === "string" ? text : "");												
+		},
 		
 		getAllExtensionsDisplayValue: function(workItem, targetDisplayName) {
 		    if (!workItem) return { value: "", type: "", key: "" };
