@@ -110,14 +110,19 @@ define([
 					} else {
 						if (childElemt.type === "string" ) {
 							var cell = new EditableTextCell(childElemt, self.callback.bind(self));
+						
 						} else if (childElemt.type === "category" ) {
 							var cell = new CategoryCell(childElemt, paContextId, self.callback.bind(self));
+						
 						} else if (childElemt.type === "contributor" ) {
 							var cell = new CategoryCell(childElemt, contextId, self.callback.bind(self));
+						
 						} else if (childElemt.type === "deliverable" ) {
 							var cell = new DeliverableCell(childElemt, paContextId, self.callback.bind(self));
+						
 						} else if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
 							var cell = new ComboBoxCell(childElemt, childElemt.values, self.callback.bind(self));
+						
 						} else {
 							console.log(childElemt);
 						}
