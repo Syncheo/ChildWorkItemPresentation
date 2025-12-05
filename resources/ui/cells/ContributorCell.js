@@ -15,15 +15,15 @@ define([
 ], function(declare, ComboBox, Memory, 
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CategoryCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", null, {
 
         element: {},
-		paContextId: "",
+		contextId: "",
         onChange: null,  // callback lors du changement
 
-        constructor: function(element, paContextId, onChange){
+        constructor: function(element, contextId, onChange){
             this.element = element || {};
-			this.paContextId = paContextId.value || ""
+			this.contextId = contextId.value || ""
             this.onChange = onChange || function(){};
         },
 
@@ -48,7 +48,7 @@ define([
 
             combo.startup();
 			
-			self.getValues(combo, self.paContextId);
+			self.getValues(combo, self.contextId);
 
             // Déclencher le callback onChange
             on(combo, "change", function(val){
@@ -63,28 +63,48 @@ define([
             });
         },
 		
-		getValues: function(combo, paContextId) {
+		getValues: function(combo, contextId) {
 			var self = this;
 			
-			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-				"rpt/repository/workitem?fields=workitem/category[contextId=" + paContextId + "]/(id|name)";
-										
+			var contributorUrl = JAZZ.getApplicationBaseUrl() + "rpt/repository/foundation?fields=foundation/(" + 
+				"projectArea[itemId=" + contextId+ "]/teamMembers/(userId|name)|" + 
+				"teamArea[itemId="+ contextId+ "]/teamMembers/(userId|name))";
+				
+				
 			if (paContextId) {
-				XHR.oslcXmlGetRequest(categoryUrl).then(
+				XHR.oslcXmlGetRequest(contributorUrl).then(
 					function (data) {
-						var categories = Array.from(data.getElementsByTagName("category") || []);
-
-						var cats = categories.map(function(d) {
-							return {
-								id: self.getFirstTagText(d, "id"), 
-								name: (self.getFirstTagText(d, "name") || "").split("/").pop()
-							}
-						});
-						var storeData = cats.map(function(item){
-							return { id: item.id, name: item.name };
+						
+						var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
+						var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
+																	
+						var paMembers = projectArea.map(function(pa) {
+							var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
+							return nodes.map(function (tm) {
+								return {
+									id: self.getFirstTagText(tm, "userId"), 
+									name: self.getFirstTagText(tm, "name")
+								}
+							});
 						});
 						
-						var newStore = new Memory({ data: storeData });
+						var taMembers = teamArea.map(function(ta) {
+							var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
+							return nodes.map(function (tm) {
+								return {
+									id: self.getFirstTagText(tm, "userId"), 
+									name: self.getFirstTagText(tm, "name")
+								}
+							});
+						});						
+																
+						
+						
+						var contributors = [];
+						contributors.push(paMembers);
+						contributors.push(taMembers);
+															
+						var newStore = new Memory({ data: contributors });
 						combo.set("store", newStore);  
 					}, 
 					function(err) {

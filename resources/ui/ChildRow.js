@@ -20,12 +20,15 @@ define([
 	"./cells/LinkCell",
 	"./cells/EditableTextCell",
 	"./cells/ComboBoxCell",
-	"./cells/CategoryCell"
+	"./cells/CategoryCell",
+	"./cells/ContributorCell",
+	"./cells/DeliverableCell"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, TextBox, Select, DateTextBox, CheckBox,
     on, domConstruct, template, 
-	StandardCell,  LinkCell, EditableTextCell, ComboBoxCell, CategoryCell) {
+	StandardCell,  LinkCell, EditableTextCell, 
+	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 			
@@ -109,12 +112,15 @@ define([
 							var cell = new EditableTextCell(childElemt, self.callback.bind(self));
 						} else if (childElemt.type === "category" ) {
 							var cell = new CategoryCell(childElemt, paContextId, self.callback.bind(self));
-						} else  if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
+						} else if (childElemt.type === "contributor" ) {
+							var cell = new CategoryCell(childElemt, contextId, self.callback.bind(self));
+						} else if (childElemt.type === "deliverable" ) {
+							var cell = new DeliverableCell(childElemt, paContextId, self.callback.bind(self));
+						} else if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
 							var cell = new ComboBoxCell(childElemt, childElemt.values, self.callback.bind(self));
 						} else {
 							console.log(childElemt);
 						}
-
 					}
 					cell.render(td);
 				}

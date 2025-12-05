@@ -15,10 +15,10 @@ define([
 ], function(declare, ComboBox, Memory, 
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CategoryCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DeliverableCell", null, {
 
         element: {},
-		paContextId: "",
+		contextId: "",
         onChange: null,  // callback lors du changement
 
         constructor: function(element, paContextId, onChange){
@@ -48,7 +48,7 @@ define([
 
             combo.startup();
 			
-			self.getValues(combo, self.paContextId);
+			self.getValues(combo, self.contextId);
 
             // Déclencher le callback onChange
             on(combo, "change", function(val){
@@ -66,32 +66,28 @@ define([
 		getValues: function(combo, paContextId) {
 			var self = this;
 			
-			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-				"rpt/repository/workitem?fields=workitem/category[contextId=" + paContextId + "]/(id|name)";
-										
-			if (paContextId) {
-				XHR.oslcXmlGetRequest(categoryUrl).then(
-					function (data) {
-						var categories = Array.from(data.getElementsByTagName("category") || []);
+			var deliverableUrl = JAZZ.getApplicationBaseUrl() + 
+				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + paContextId + "]/(itemId|name)";
+				
+			XHR.oslcXmlGetRequest(deliverableUrl).then(
+				function (data) {
+					var deliverables = Array.from(data.getElementsByTagName("deliverable") || [] );
+									
+					var devs = deliverables.map(function(d) {
+						return {
+							id: self.getFirstTagText(d, "itemId"),
+							name: self.getFirstTagText(d, "name")
+						}
+					});
 
-						var cats = categories.map(function(d) {
-							return {
-								id: self.getFirstTagText(d, "id"), 
-								name: (self.getFirstTagText(d, "name") || "").split("/").pop()
-							}
-						});
-						var storeData = cats.map(function(item){
-							return { id: item.id, name: item.name };
-						});
-						
-						var newStore = new Memory({ data: storeData });
-						combo.set("store", newStore);  
-					}, 
-					function(err) {
-						console.error("Erreur chargement category:", err);
-					}
-				);
-			}
+					var newStore = new Memory({ data: devs });
+					combo.set("store", newStore); 	
+				},
+				function(err) {
+					console.error("Erreur chargement deliverable:", err);
+				}
+			);
+		
 		},
 		
 		getFirstTagText: function(element, tagName) {
