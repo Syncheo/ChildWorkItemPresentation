@@ -4,6 +4,7 @@ const packageJson = require('./package.json');
 const core = require('@actions/core');
 const DisableOutputWebpackPlugin = require("disable-output-webpack-plugin");
 const RemovePlugin = require("remove-files-webpack-plugin");
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = (env) => {
 	env && env.buildUUID && console.info(`Build UUID is passed along: '${env.buildUUID}'`);
@@ -18,6 +19,15 @@ module.exports = (env) => {
 			filename: '[name]Bundle.js' // not used, prevent webpack from failing
 		},
 		plugins: [
+			new CopyWebpackPlugin({
+			    patterns: [
+			        {
+			            from: 'bin/**',       // prend tout ce qui est dans bin/
+			            to: '[path][name][ext]', // conserve la structure de package mais supprime 'bin/' racine
+						noErrorOnMissing: true
+					}
+			    ]
+			}),
 			new JazzUpdateSitePlugin({
 				appType: 'ccm',
 				projectId: projectId,

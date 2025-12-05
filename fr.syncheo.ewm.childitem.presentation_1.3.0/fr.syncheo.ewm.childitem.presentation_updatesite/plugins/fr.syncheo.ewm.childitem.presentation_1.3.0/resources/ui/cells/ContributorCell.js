@@ -15,15 +15,15 @@ define([
 ], function(declare, ComboBox, Memory, 
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DeliverableCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", null, {
 
         element: {},
 		contextId: "",
         onChange: null,  // callback lors du changement
 
-        constructor: function(element, paContextId, onChange){
+        constructor: function(element, contextId, onChange){
             this.element = element || {};
-			this.paContextId = paContextId.value || ""
+			this.contextId = contextId.value || ""
             this.onChange = onChange || function(){};
         },
 
@@ -42,13 +42,13 @@ define([
             var combo = new ComboBox({
                 value: self.element.value,
                 store: store,
-                searchAttr: "name", 
+                searchAttr: "name",
                 autoComplete: false
             }, container);
 
             combo.startup();
 			
-			self.getValues(combo, self.paContextId);
+			self.getValues(combo, self.contextId);
 
             // Déclencher le callback onChange
             on(combo, "change", function(val){
@@ -63,31 +63,52 @@ define([
             });
         },
 		
-		getValues: function(combo, paContextId) {
+		getValues: function(combo, contextId) {
 			var self = this;
 			
-			var deliverableUrl = JAZZ.getApplicationBaseUrl() + 
-				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + paContextId + "]/(itemId|name)";
+			var contributorUrl = JAZZ.getApplicationBaseUrl() + "rpt/repository/foundation?fields=foundation/(" + 
+				"projectArea[itemId=" + contextId+ "]/teamMembers/(userId|name)|" + 
+				"teamArea[itemId="+ contextId+ "]/teamMembers/(userId|name))";
 				
-			XHR.oslcXmlGetRequest(deliverableUrl).then(
+			XHR.oslcXmlGetRequest(contributorUrl).then(
 				function (data) {
-					var deliverables = Array.from(data.getElementsByTagName("deliverable") || [] );
+					
+					var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
+					var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
+					
+					
+					var paMembers = projectArea.reduce(function(acc, pa) {
+					    var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
+					    nodes.forEach(function(pm) {
+					        acc.push({
+					            id: self.getFirstTagText(pm, "userId"),
+					            name: self.getFirstTagText(pm, "name")
+					        });
+					    });
+					    return acc;
+					}, []);
+															
+					var taMembers = teamArea.reduce(function(acc, ta) {
+					    var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
+					    nodes.forEach(function(tm) {
+					        acc.push({
+					            id: self.getFirstTagText(tm, "userId"),
+					            name: self.getFirstTagText(tm, "name")
+					        });
+					    });
+					    return acc;
+					}, []);
 									
-					var devs = deliverables.map(function(d) {
-						return {
-							id: self.getFirstTagText(d, "itemId"),
-							name: self.getFirstTagText(d, "name")
-						}
-					});
-
-					var newStore = new Memory({ data: devs });
-					combo.set("store", newStore); 	
-				},
+					var contributors = [].concat(paMembers, taMembers);
+												
+					var newStore = new Memory({ data: contributors });
+					combo.set("store", newStore);  
+				}, 
 				function(err) {
-					console.error("Erreur chargement deliverable:", err);
+					console.error("Erreur chargement category:", err);
 				}
 			);
-		
+			
 		},
 		
 		getFirstTagText: function(element, tagName) {
