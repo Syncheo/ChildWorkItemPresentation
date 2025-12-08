@@ -3,9 +3,6 @@ package fr.syncheo.ewm.childitem.server;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -19,6 +16,7 @@ import com.ibm.team.repository.common.TeamRepositoryException;
 import com.ibm.team.repository.service.IRepositoryItemService;
 import com.ibm.team.repository.service.TeamRawService;
 import com.ibm.team.workitem.service.IWorkItemServer;
+import com.ibm.team.workitem.common.model.IState;
 import com.ibm.team.workitem.common.model.IWorkItem;
 import com.ibm.team.workitem.common.model.Identifier;
 import com.ibm.team.workitem.common.workflow.IWorkflowAction;
@@ -26,13 +24,13 @@ import com.ibm.team.workitem.common.workflow.IWorkflowInfo;
 /**
  * Service côté serveur pour récupérer ou calculer les enfants d'un workitem
  */
-public class ChildItemService extends TeamRawService implements IChildItemService {
+public class NewUtilityService extends TeamRawService implements IGetStatesService {
 
     @Override
     public void perform_GET(String uri, HttpServletRequest request, HttpServletResponse response) 
             throws IOException {
     	
-    	
+ 
     	String workItemIdStr = request.getParameter("workItemId");
     	if (workItemIdStr == null) {
     		response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing workItemId");
@@ -51,9 +49,6 @@ public class ChildItemService extends TeamRawService implements IChildItemServic
         
     	JSONObject json = new JSONObject();
     	
-    	json.put("status", "ok");
-    	json.put("childrenCount", 5);
-
     	String username = loggedIn();
     	json.put("loggedInUser", username);
     	
@@ -62,17 +57,9 @@ public class ChildItemService extends TeamRawService implements IChildItemServic
         IWorkItem wi;
 		try {
 			wi = workItemService.findWorkItemById(workItemId, IWorkItem.DEFAULT_PROFILE, null);
-			List<String> states = getPossibleTargetStates(wi, null);
-			
-			JSONArray jsonArray = new JSONArray();
-		    
-		    if (states != null) {
-			    for (String element : states) {
-			        jsonArray.add(element);
-			    }
-		    }
-		    			
-			json.put("states", jsonArray);
+			JSONArray states = getPossibleTargetStates(wi, null);
+				
+			json.put("states", states);
 		} catch (TeamRepositoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -88,19 +75,32 @@ public class ChildItemService extends TeamRawService implements IChildItemServic
     }
 
  // Méthode utilitaire côté serveur
-    public List<String> getPossibleTargetStates(IWorkItem workItem, IProgressMonitor monitor)
+    public JSONArray getPossibleTargetStates(IWorkItem workItem, IProgressMonitor monitor)
             throws TeamRepositoryException {
 
+    	JSONArray rex = new JSONArray();
         IWorkItemServer workItemService = getService(IWorkItemServer.class);
         IWorkflowInfo workflowInfo = workItemService.findWorkflowInfo(workItem, monitor);
 
         Identifier<IWorkflowAction>[] availableActions = workflowInfo.getActionIds(workItem.getState2());
 
-        List<String> list = new ArrayList<>();
         for (Identifier<IWorkflowAction> action : availableActions) {
-            list.add(action.getStringIdentifier() + " = " + workflowInfo.getActionName(action));
+        	Identifier<IState> resultState = workflowInfo.getActionResultState(action);
+        	
+        	JSONObject json = new JSONObject();
+        	JSONObject actObj = new JSONObject();
+        	actObj.put("id", action.getStringIdentifier());
+        	actObj.put("name", workflowInfo.getActionName(action));
+        	
+        	JSONObject stateObj = new JSONObject();
+        	stateObj.put("id", resultState.getStringIdentifier());
+        	stateObj.put("name", workflowInfo.getStateName(resultState));
+        	
+        	json.put("action", actObj);
+        	json.put("state", stateObj);  
+        	rex.add(json);
         }
-        return list;
+        return rex;
     }
 
 

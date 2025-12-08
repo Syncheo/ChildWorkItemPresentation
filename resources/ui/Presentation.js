@@ -69,7 +69,8 @@ define([
 
 		workItem: null,
 		_editorContext: null,
-		childRowWidgets: null, // Initialiser à null ou []
+		childRowWidgets: null, // Initialiser à null ou [],
+		changedElements: {},
 		        
 				
 		constructor: function (args) {
@@ -79,11 +80,11 @@ define([
 			this.itemId = args.workItem.itemId;
 			this.setConfigurationProperties(args);
 			this.workItem = args.workItem;
-			this._editorContext = args.parentController;		},
+			this._editorContext = args.parentController;		
+		},
 		
 		postCreate: function() {
             this.inherited(arguments);
-			
             if (this.workItem && this.workItem.id > 0) {
                 this.createChildTable(this.workItem.id);
             }
@@ -254,6 +255,67 @@ define([
 		},
 
 
+		changedOject: function(object) {
+		    var self = this;
+		    // 1. Mettre à jour l'objet de suivi des changements
+		    // Assurez-vous que self.changedElements est initialisé comme un objet vide dans le constructeur.
+		    if (!self.changedElements) {
+		        self.changedElements = {};
+		    }
+		    // Object.assign ajoute/écrase les propriétés de 'object' dans 'self.changedElements'
+		    Object.assign(self.changedElements, object);
+		    
+		    console.log("Données en cours de modification (changedElements):", self.changedElements);
+		    
+		    // 2. Tenter d'activer l'état 'Dirty' sur l'éditeur principal
+		    
+		    if (self._editorContext) {
+		        
+		        // Tentative A (La plus probable pour l'API EWM)
+		        if (typeof self._editorContext.setWorkItemModified === 'function') {
+		            
+		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via setWorkItemModified(true).");
+		            self._editorContext.setWorkItemModified(true); 
+		            
+		            // Sortir si la méthode fonctionne pour éviter les appels inutiles.
+		            return;
+		            
+		        } 
+		        
+		        // Tentative B (Variante de l'API Work Item)
+		        if (typeof self._editorContext.markWorkItemModified === 'function') {
+		            
+		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via markWorkItemModified(true).");
+		            self._editorContext.markWorkItemModified(true);
+		            return;
+		            
+		        }
+		        
+		        // Tentative C (Dernière chance avec les conventions génériques non EWM)
+		        if (typeof self._editorContext.setModified === 'function') {
+		            
+		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via setModified(true).");
+		            self._editorContext.setModified(true);
+		            return;
+		            
+		        }
+				
+				if (typeof self._editorContext.markDirty === 'function') {
+				    
+				    console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via markDirty(true).");
+				    self._editorContext.markDirty(true);
+				    return;
+				    
+				}
+
+		        // Si aucune des méthodes n'a fonctionné :
+		        console.error("❌ Échec de la notification : Aucune méthode EWM/Dojo connue pour marquer l'éditeur comme modifié n'a été trouvée.");
+		        
+		    } else {
+		        console.error("ERREUR : _editorContext (parentController) n'est pas défini. Impossible de notifier l'éditeur.");
+		    }
+		},
+		
 		/**
 		 *
 		 * going through the jazz integrated proxy. This allows as to make cross
@@ -266,16 +328,17 @@ define([
 			
 			if (self.childRowWidgets) {
 			    self.childRowWidgets.forEach(function(widget) {
-			        // Utiliser destroyRecursive si vous êtes sûr que tous les enfants sont des Dijit
-			        // Sinon, utiliser destroy() (si ChildRow ne dérive que de _WidgetBase)
-			        if (widget && widget.destroy) { 
+			        
+			        // 🎯 CORRECTION : Utiliser destroyRecursive pour garantir le nettoyage complet
+			        if (widget && widget.destroyRecursive) { 
+			            widget.destroyRecursive(); 
+			        } else if (widget && widget.destroy) {
+			            // Fallback, mais destroyRecursive est préférable
 			            widget.destroy();
 			        }
 			    });
 			}
 			self.childRowWidgets = []; // Réinitialiser pour stocker les nouvelles
-
-			
 
 			self.normalizeFieldValues(allChilds);
 			
@@ -291,8 +354,11 @@ define([
 			ch.placeAt(self.childrenHeader);
 			ch.startup();
 			
-			for (var i = 0; i < allChilds.length; i++) {
-				var cr = new ChildRow(allChilds[i]);
+			for (var i = 0; i < allChilds.length; i++) {								
+				var cr = new ChildRow({
+					childData: allChilds[i], 
+					onChange: self.changedOject.bind(self)
+				});
 				cr.placeAt(self.childrenBody);
 			    cr.startup();
 				self.childRowWidgets.push(cr);
@@ -446,9 +512,9 @@ define([
 		    return (n && n[0] && n[0].textContent) || null;
 		},
 		
-		_onGlobalSave: function(evt) {
+/*		_onGlobalSave: function(evt) {
 		    console.log("👉 Le bouton SAVE global a été cliqué !");
-		},
+		},*/
 		
 		splitByComma: function(str) {
 		    if (typeof str !== "string") {

@@ -8,8 +8,13 @@
                    name="Child Workitem Component">
             <!-- Service REST modélisé -->
             <service kind="MODELLED_REST"
-                     name="Child Workitem REST Service"
-                     uri="fr.syncheo.ewm.childitem.server.IChildItemService"
+                     name="Service REST de récupération des états"
+                     uri="fr.syncheo.ewm.childitem.server.IGetStatesService"
+                     version="1"/>
+                     
+             <service kind="MODELLED_REST"
+                     name="Nouveau Service d'Outil REST"
+                     uri="fr.syncheo.ewm.childitem.server.INewUtilityService" 
                      version="1"/>
         </component>
     </extension>
@@ -17,9 +22,22 @@
     <!-- Fournisseur d’implémentation côté serveur -->
     <extension point="com.ibm.team.repository.service.serviceProvider">
         <serviceProvider componentId="fr.syncheo.ewm.childitem"
-                         implementationClass="fr.syncheo.ewm.childitem.server.ChildItemService">
+                         implementationClass="fr.syncheo.ewm.childitem.server.GetStatesService">
             <provides>
-                <providedService interface="fr.syncheo.ewm.childitem.server.IChildItemService"/>
+                <providedService interface="fr.syncheo.ewm.childitem.server.IGetStatesService"/>
+            </provides>
+            <prerequisites>
+            	<requiredService interface="com.ibm.team.repository.service.IRepositoryItemService"/>
+            	<requiredService interface="com.ibm.team.workitem.service.IWorkItemServer" />
+            </prerequisites>    
+        </serviceProvider>
+    </extension>
+
+    <extension point="com.ibm.team.repository.service.serviceProvider">
+        <serviceProvider componentId="fr.syncheo.ewm.childitem"
+                         implementationClass="fr.syncheo.ewm.childitem.server.NewUtilityService">
+            <provides>
+                <providedService interface="fr.syncheo.ewm.childitem.server.INewUtilityService"/>
             </provides>
             <prerequisites>
             	<requiredService interface="com.ibm.team.repository.service.IRepositoryItemService"/>
@@ -34,10 +52,10 @@
     </extension>
 
     <!-- Déclaration produit et compatibilité JTS -->
-    <extension point="com.ibm.team.jazz.foundation.server.products">
+	<extension point="com.ibm.team.jazz.foundation.server.products">
         <product id="fr.syncheo.ewm.childitem"
                  name="Child Workitem Table"
-                 requiredJtsVersions="[4.0.0,6.1.0)"
+                 requiredJtsVersions="[7.0.2,7.2.0)" 
                  type="APPLICATION"
                  version="1.0.0.0"/>
     </extension>

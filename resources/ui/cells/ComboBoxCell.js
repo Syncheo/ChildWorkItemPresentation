@@ -8,23 +8,26 @@ define([
     "dojo/_base/declare",
     "dijit/form/ComboBox",
     "dojo/store/Memory",
+	"dijit/_WidgetBase",
     "dojo/dom-construct",
     "dojo/on"
-], function(declare, ComboBox, Memory, domConstruct, on) {
+], function(declare, ComboBox, Memory, _WidgetBase, domConstruct, on) {
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ComboBoxCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ComboBoxCell", [_WidgetBase], {
 
 		element: {},
         options: [],       // tableau de valeurs simples ["High", "Medium", "Low"]
         onChange: null,    // callback quand la valeur change
+		widget: null,
 
-        constructor: function(element, options, onChange) {
-            this.element = element || {};
-            this.options = options || [];
-            this.onChange = onChange || function() {};
+        constructor: function(args){
+            this.element = args.element || {};
+            this.options = this.element.values || [];
+            this.onChange = args.onChange || function() {};
         },
 
         render: function(tdElement) {
+			var self = this;
             var container = domConstruct.create("div", {
                 style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
             }, tdElement);
@@ -35,27 +38,40 @@ define([
                 idProperty: "id"
             });
 
-            var widget = new ComboBox({
+            self.widget = new ComboBox({
                 value: this.element.value,
                 store: store,
                 searchAttr: "name",
                 style: "width:100%; box-sizing:border-box;"
             }, container);
 
-            widget.startup();
+            self.widget.startup();
 
-			on(widget, "change", function(val) {
-			    // Marquer le widget comme dirty pour EWM
-			    widget._hasBeenBlurred = true; // simule blur pour forcer _isDirty
-			    widget._set("value", val);     // set la valeur réelle
-			    widget._isDirty = true;        // le flag interne
-			    widget.focusNode.dispatchEvent(new Event('change', { bubbles: true })); // event que EWM écoute
-
-			    // Callback utilisateur
-			    self.onChange(val, this.element);
-			});
 			
-        }
+			self.own(
+			    self.widget.on("change", function(newValue) {
+			        // Votre logique de gestion du changement ici
+			        self.onChange(newValue, self.element);
+			    })
+			);
+			
+/*			on(self.widget, "change", function(val) {
+				self.onChange(val, self.element);
+			});*/
+			
+        },
+		
+		destroy: function() {
+		    var self = this;
+		    if (self.widget && typeof self.widget.destroy === 'function') {
+		        self.widget.destroy();
+		    }
+			
+			self.inherited(arguments);
+
+			
+		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
+		}
 
     });
 

@@ -7,52 +7,78 @@
 define([
     "dojo/_base/declare",
     "dijit/form/TextBox",
+	"dijit/_WidgetBase",
 	"dojo/dom-construct",
 	"dojo/on"
-], function(declare, TextBox, domConstruct, on) {
+], function(declare, TextBox, _WidgetBase, domConstruct, on) {
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.EditableTextCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.EditableTextCell", [_WidgetBase], {
 
         element: {},
         onChange: null, // callback quand la valeur change
+		widget: null,
 
-        constructor: function(element, onChange) {
-			this.element = element || {};
-            this.onChange = onChange || function() {};
+        constructor: function(args){
+			this.element = args.element || {};
+            this.onChange = args.onChange || function() {};
         },
 
 		render: function (tdElement) {
-            var container = domConstruct.create("div", {
+			var self = this;
+
+			var container = domConstruct.create("div", {
                 style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
             }, tdElement);
 
-            var widget = new TextBox({
+            self.widget = new TextBox({
                 value: this.element.value || ""
             }, container);
 
-            widget.startup();
+            self.widget.startup();
 
             // S'assurer que le TextBox et son focusNode respectent la largeur
-            widget.domNode.style.width = "100%";
-            widget.domNode.style.boxSizing = "border-box";
+            self.widget.domNode.style.width = "100%";
+            self.widget.domNode.style.boxSizing = "border-box";
 
-            if (widget.focusNode) {
-                widget.focusNode.style.width = "100%";
-                widget.focusNode.style.boxSizing = "border-box";
+            if (self.widget.focusNode) {
+                self.widget.focusNode.style.width = "100%";
+                self.widget.focusNode.style.boxSizing = "border-box";
             }
 
-            // Écoute du changement de valeur
-			on(widget.focusNode, "input", function(evt) {
-			    var newValue = evt.target.value;  // valeur réellement saisie
-			    console.log("Nouvelle valeur :", newValue);
-
-			    if (typeof this.onChange === "function") {
-			        this.onChange(newValue, this.element);
-			    }
-			}.bind(this));
+/*			self.own(
+			    self.widget.on("change", function(newValue) {
+			        // Votre logique de gestion du changement ici
+					console.log("Nouvelle valeur :", newValue);
+					self.onChange(newValue, self.element);
+			    })
+			);*/
 			
-		}
+			self.own(
+			    on(self.widget.focusNode, "input", function(evt) {
+			        var val = evt.target.value;  // valeur réellement saisie
+			        console.log("Nouvelle valeur :", val);
+			        self.onChange(val, self.element);
+			    })
+			);
+			
+            // Écoute du changement de valeur
+/*			on(self.widget.focusNode, "input", function(evt) {
+			    var val = evt.target.value;  // valeur réellement saisie
+			    console.log("Nouvelle valeur :", val);
+				self.onChange(val, self.element);
+			});*/
+			
+		},
+		
+		destroy: function() {
+		    var self = this;
+		    if (self.widget && typeof self.widget.destroy === 'function') {
+		        self.widget.destroy();
+		    }
+			self.inherited(arguments);
 
+		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
+		}
     });
 
 });

@@ -22,13 +22,14 @@ define([
 	"./cells/ComboBoxCell",
 	"./cells/CategoryCell",
 	"./cells/ContributorCell",
-	"./cells/DeliverableCell"
+	"./cells/DeliverableCell",
+	"./cells/StateCell"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, TextBox, Select, DateTextBox, CheckBox,
     on, domConstruct, template, 
 	StandardCell,  LinkCell, EditableTextCell, 
-	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell) {
+	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell, StateCell) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 			
@@ -37,37 +38,24 @@ define([
 			childData: null,
 			changed: null,
 			url: null,
+			allCells: null,
+			onChange: null,
 			
-			
-			constructor: function (childData) {
-				this.childData = childData;
+			constructor: function (args) {
+				this.childData = args.childData || {};
+				this.onChange = args.onChange || function(){};
 			},
+			
 	
 			postCreate: function () {
 				var self = this;
 				self.changed = {};
+				self.allCells = [];
 				
 				console.log(self.childData);
 				self.inherited(arguments);
 				
 				if (!self.childData) return;
-					
-				// Lancer après un petit délai pour laisser Jazz rendre la page
-				setTimeout(function () {
-				    var globalSaveBtn = document.querySelector('button.j-button-primary[dojoattachpoint="saveCmd"]');
-
-				    if (globalSaveBtn) {
-				        self.own(
-				            on(globalSaveBtn, "click", function (evt) {
-				                self._onGlobalSave(evt);
-				            })
-				        );
-				    } else {
-				        console.warn("⚠️ Bouton Save global non trouvé !");
-				    }
-				}, 300);
-					
-				
 				
 				var id = self.childData.filter(function(elmt) {	return elmt.name === "Id" })[0];
 				var type = self.childData.filter(function(elmt) { return elmt.name === "Type"	})[0];
@@ -80,22 +68,22 @@ define([
 
 				
 				var td = domConstruct.create("td", {}, self.childRow);
-				var cell = new LinkCell(type.value + " " + id.value, self.url.value); // si tu veux un lien
-				cell.render(td);
+				var cellId = new LinkCell(type.value + " " + id.value, self.url.value); // si tu veux un lien
+				cellId.render(td);
 				
-	
+				self.allCells.push(cellId);
+				
 				// Cellule Summary
 				var td2 = domConstruct.create("td", {}, self.childRow);
 				if( summary.editable) {
-					var cell = new EditableTextCell(summary.value, function(newValue) {
-					    var fieldName = summary.name || "Summary";
-					    self._onTextboxChanged(self.url.value, fieldName, newValue);
-					});					
+					var cellSummary = new EditableTextCell(summary.value, self.callback.bind(self));					
 				} else {
-					var cell = new LinkCell(summary.value, this.url.value); // si tu veux un lien
+					var cellSummary = new LinkCell(summary.value, this.url.value); // si tu veux un lien
 				}
-				cell.render(td2);
+				cellSummary.render(td2);
 
+				self.allCells.push(cellSummary);
+				
 				for (var i = 0; i < self.childData.length; i++) {
 					
 					var childElemt = self.childData[i];
@@ -109,53 +97,94 @@ define([
 						var cell = new StandardCell(childElemt.value);
 					} else {
 						if (childElemt.type === "string" ) {
-							var cell = new EditableTextCell(childElemt, self.callback.bind(self));
-						
+							var cell = new EditableTextCell({
+								element: childElemt, 
+								onChange: self.callback.bind(self)
+							});						
 						} else if (childElemt.type === "category" ) {
-							var cell = new CategoryCell(childElemt, paContextId, self.callback.bind(self));
-						
+							var cell = new CategoryCell({
+								element: childElemt, 
+								paContextId: paContextId, 
+								onChange: self.callback.bind(self)
+							});						
 						} else if (childElemt.type === "contributor" ) {
-							var cell = new ContributorCell(childElemt, contextId, self.callback.bind(self));
-						
+							var cell = new ContributorCell({
+								element: childElemt, 
+								contextId: contextId, 
+								onChange: self.callback.bind(self)
+							});
 						} else if (childElemt.type === "deliverable" ) {
-							var cell = new DeliverableCell(childElemt, paContextId, self.callback.bind(self));
-						
-						} else if (childElemt.type === "enumeration" || childElemt.type === "state" ) {
-							var cell = new ComboBoxCell(childElemt, childElemt.values, self.callback.bind(self));
-						
+							var cell = new DeliverableCell({
+								element: childElemt, 
+								paContextId: paContextId, 
+								onChange: self.callback.bind(self)
+							});						
+						} else if (childElemt.type === "enumeration" ) {
+							var cell = new ComboBoxCell({
+								element: childElemt,  
+								onChange: self.callback.bind(self)
+							});				
+						} else if (childElemt.type === "state" ) {
+							var cell = new StateCell({
+								element: childElemt, 
+								workItemId: id,
+								onChange: self.callback.bind(self)
+							});						
 						} else {
 							console.log(childElemt);
 						}
 					}
 					cell.render(td);
+					self.allCells.push(cell);
 				}
+			},
+			
+			destroy: function() {
+			    var self = this;
+			    
+			    // CRITIQUE : Démarrer la destruction des éléments contenus
+			    if (self.allCells) {
+			        self.allCells.forEach(function(cell) {
+			            // Supposons que chaque cellule a une méthode 'destroy' qui nettoie son widget Dijit interne
+			            if (cell && typeof cell.destroy === 'function') {
+			                cell.destroy();
+			            } else if (cell && cell.widget && typeof cell.widget.destroy === 'function') {
+			                // Alternative: Si la cellule expose son widget interne dans une propriété 'widget'
+			                cell.widget.destroy();
+			            }
+			        });
+			    }
+			    
+			    // Nettoyer les écouteurs d'événements (du bouton SAVE global)
+			    self.own([]); // La méthode 'own' gère déjà la destruction des écouteurs on(globalSaveBtn, "click", ...)
+
+			    // Appeler la méthode destroy du parent (_WidgetBase)
+			    self.inherited(arguments); 
 			},
 			
 			
 			callback: function(newValue, element) {
 				var self = this;
+				var objectUrl = self.url.value;
 				var fieldName = element.name || "childElemt.name";
-				self._onTextboxChanged(self.url.value, fieldName, newValue);
+				if (self.changed[objectUrl] === undefined) self.changed[objectUrl] = {};
+				self.changed[objectUrl][fieldName] = newValue;
+				console.log("Champ modifié :", objectUrl, ": " , fieldName, "->", newValue);
+				console.log(self.changed);
+				self.onChange(self.changed);
 			},
 			
 			startup: function () {
 			    this.inherited(arguments);
-			},
+			}
 			
-			_onTextboxChanged: function(url, fieldName, value) {
-				if (this.changed[url] === undefined) this.changed[url] = {};
-				this.changed[url][fieldName] = value;
-				console.log("Champ modifié :", url, ": " , fieldName, "->", value);
-				console.log(this.changed);
 
-			},
-
-			_onGlobalSave: function(evt) {
+/*			_onGlobalSave: function(evt) {
 				if (Object.keys(this.changed).length !== 0) {
 					console.log("👉 Le bouton SAVE global a été cliqué !");
 					console.log("Changed : ", this.changed)
 				}
-			},
+			}*/
 			
             // --- Summary ---
    
@@ -256,21 +285,5 @@ define([
             document.dispatchEvent(event);
         },*/
 
-        getFieldType: function (header) {
-            if (header === "Due Date" || header === "Start Date") return "date";
-            if (header === "Priority" || header === "Severity") return "enum";
-            return "text";
-        },
-
-        getEnumValues: function (header) {
-            if (header === "Priority") {
-                return [
-                    { label: "High", value: "High" },
-                    { label: "Medium", value: "Medium" },
-                    { label: "Low", value: "Low" }
-                ];
-            }
-            return [];
-        }
     });
 });

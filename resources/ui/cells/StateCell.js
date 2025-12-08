@@ -14,21 +14,20 @@ define([
 	"dojo/dom-construct",
 	"dojo/on"
 ], function(declare, ComboBox, Memory, 
-	_WidgetBase, 
+	_WidgetBase,
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CategoryCell", 
-		[_WidgetBase], {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.StateCell", [_WidgetBase], {
 
         element: {},
-		paContextId: "",
+		workItemId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
-		
+
         constructor: function(args){
-            this.element = args.element || {};
-			this.paContextId = args.paContextId || {}
-            this.onChange = args.onChange || function(){};
+			this.element = args.element || {};
+			this.workItemId = args.workItemId || {}
+			this.onChange = args.onChange || function(){};
         },
 
         render: function(tdElement){
@@ -43,7 +42,7 @@ define([
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
-            self.widget = new ComboBox({
+			self.widget = new ComboBox({
                 value: self.element.value,
                 store: store,
                 searchAttr: "name",
@@ -54,47 +53,49 @@ define([
 			
 			self.getValues();
 
+
 			self.own(
 			    self.widget.on("change", function(newValue) {
 			        // Votre logique de gestion du changement ici
 			        self.onChange(newValue, self.element);
 			    })
 			);
-			
-            // Déclencher le callback onChange
-/*            on(self.widget, "change", function(val){
-                self.onChange(val, self.element);
-            });*/
         },
 		
 		getValues: function() {
 			var self = this;
 			
 			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-				"rpt/repository/workitem?fields=workitem/category[contextId=" + self.paContextId.value + "]/(id|name)";
-			
-			XHR.oslcXmlGetRequest(categoryUrl).then(
-				function (data) {
-					var categories = Array.from(data.getElementsByTagName("category") || []);
+				"service/fr.syncheo.ewm.childitem.server.IGetStatesService" +
+				"?workItemId=" + self.workItemId.value;
+				
+			XHR.oslcJsonGetRequest(categoryUrl).then(
+				function (jsonString) {
 					
-					var cats = categories.map(function(d) {
-						return {
-							id: self.getFirstTagText(d, "id"), 
-							name: (self.getFirstTagText(d, "name") || "").split("/").pop()
-						}
-					});
+					var jsonObjet = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+					var actionsList = jsonObjet.states
+						.map(function(stateObject) {
+							if (stateObject.action) {
+								return {
+									id: stateObject.action.id,
+									name: stateObject.action.name
+								};
+							}
+							return null;
+						})
+						.filter(function(action) {
+							return action !== null;
+						});
 					
-					var storeData = cats.map(function(item){
-						return { id: item.id, name: item.name };
-					});
 						
-					var newStore = new Memory({ data: storeData });
-					self.widget.set("store", newStore);  
-				}, 
-				function(err) {
-					console.error("Erreur chargement category:", err);
-				}
-			);
+						var newStore = new Memory({ data: actionsList });
+						self.widget.set("store", newStore);  
+					}, 
+					function(err) {
+						console.error("Erreur chargement state:", err);
+					}
+				);
+			
 		},
 		
 		getFirstTagText: function(element, tagName) {
@@ -104,15 +105,14 @@ define([
 		},
 		
 		destroy: function() {
-            var self = this;
-            if (self.widget && typeof self.widget.destroy === 'function') {
-                self.widget.destroy();
-            }
+		    var self = this;
+		    if (self.widget && typeof self.widget.destroy === 'function') {
+		        self.widget.destroy();
+		    }
 			self.inherited(arguments);
-
-            // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
-        }
-				
+		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
+		}
+		
     });
 
 });

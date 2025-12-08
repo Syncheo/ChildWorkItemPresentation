@@ -8,23 +8,26 @@ define([
     "dojo/_base/declare",
     "dijit/form/ComboBox",
     "dojo/store/Memory",
+	"dijit/_WidgetBase",
 	"../XhrHelpers",
 	"../JazzHelpers",
 	"dojo/dom-construct",
 	"dojo/on"
 ], function(declare, ComboBox, Memory, 
+	_WidgetBase,
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DeliverableCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DeliverableCell", [_WidgetBase], {
 
         element: {},
-		contextId: "",
+		paContextId: "",
         onChange: null,  // callback lors du changement
+		widget: null,
 
-        constructor: function(element, paContextId, onChange){
-            this.element = element || {};
-			this.paContextId = paContextId.value || ""
-            this.onChange = onChange || function(){};
+        constructor: function(args){
+            this.element = args.element || {};
+			this.paContextId = args.paContextId || {}
+            this.onChange = args.onChange || function(){};
         },
 
         render: function(tdElement){
@@ -39,35 +42,35 @@ define([
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
-            var combo = new ComboBox({
+            self.widget = new ComboBox({
                 value: self.element.value,
                 store: store,
                 searchAttr: "name", 
                 autoComplete: false
             }, container);
 
-            combo.startup();
+            self.widget.startup();
 			
-			self.getValues(combo, self.paContextId);
+			self.getValues();
 
+			self.own(
+			    self.widget.on("change", function(newValue) {
+			        // Votre logique de gestion du changement ici
+			        self.onChange(newValue, self.element);
+			    })
+			);
+			
             // Déclencher le callback onChange
-            on(combo, "change", function(val){
-                self.onChange(val, tdElement);
-
-                // Déclencher un événement input pour compatibilité avec EWM Save
-                if(combo.focusNode){
-                    var event = document.createEvent("HTMLEvents");
-                    event.initEvent("input", true, true);
-                    combo.focusNode.dispatchEvent(event);
-                }
-            });
+   /*         on(self.widget, "change", function(val){
+				self.onChange(val, self.element);
+            });*/
         },
 		
-		getValues: function(combo, paContextId) {
+		getValues: function() {
 			var self = this;
 			
 			var deliverableUrl = JAZZ.getApplicationBaseUrl() + 
-				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + paContextId + "]/(itemId|name)";
+				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + self.paContextId.value + "]/(itemId|name)";
 				
 			XHR.oslcXmlGetRequest(deliverableUrl).then(
 				function (data) {
@@ -81,7 +84,7 @@ define([
 					});
 
 					var newStore = new Memory({ data: devs });
-					combo.set("store", newStore); 	
+					self.widget.set("store", newStore); 	
 				},
 				function(err) {
 					console.error("Erreur chargement deliverable:", err);
@@ -94,7 +97,18 @@ define([
 		    if (!element) return null;
 		    var n = element.getElementsByTagName(tagName);
 		    return (n && n[0] && n[0].textContent) || null;
+		},
+		
+		destroy: function() {
+		    var self = this;
+		    if (self.widget && typeof self.widget.destroy === 'function') {
+		        self.widget.destroy();
+		    }
+			self.inherited(arguments);
+
+		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
 		}
+		
     });
 
 });

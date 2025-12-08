@@ -6,25 +6,29 @@
 
 define([
     "dojo/_base/declare",
+	"dijit/_WidgetBase",
     "dijit/form/ComboBox",
     "dojo/store/Memory",
-	"../XhrHelpers",
-	"../JazzHelpers",
 	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, ComboBox, Memory, 
-	XHR, JAZZ, domConstruct, on){
+	"dojo/on",
+	"../XhrHelpers",
+	"../JazzHelpers"
+], function(declare, _WidgetBase, ComboBox, Memory, 
+	domConstruct, on, XHR, JAZZ){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", 
+		[_WidgetBase], 
+	{
+		_elementData: null,      // Les données de l'attribut de l'élément enfant
+		_cellContextId: "",      // L'ID de la zone de projet/équipe pour les requêtes
+        onChange: null, // Le callback à appeler lors du changement de valeur
+		widget: null,
 
-        element: {},
-		contextId: "",
-        onChange: null,  // callback lors du changement
 
-        constructor: function(element, contextId, onChange){
-            this.element = element || {};
-			this.contextId = contextId.value || ""
-            this.onChange = onChange || function(){};
+		constructor: function (args) {
+            this._elementData = args.element || {};
+			this._cellContextId = args.contextId || {} ; // contextId est un objet {value: ...}
+            this.onChange = args.onChange || function(){};
         },
 
         render: function(tdElement){
@@ -39,36 +43,31 @@ define([
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
-            var combo = new ComboBox({
-                value: self.element.value,
-                store: store,
-                searchAttr: "name",
-                autoComplete: false
-            }, container);
-
-            combo.startup();
+			self.widget = new ComboBox({
+			                value: self._elementData.value,
+			                store: store,
+			                searchAttr: "name",
+			                autoComplete: false
+			            }, container);
+						
+            self.widget.startup();
 			
-			self.getValues(combo, self.contextId);
+			self._getValues();
 
-            // Déclencher le callback onChange
-            on(combo, "change", function(val){
-                self.onChange(val, tdElement);
-
-                // Déclencher un événement input pour compatibilité avec EWM Save
-                if(combo.focusNode){
-                    var event = document.createEvent("HTMLEvents");
-                    event.initEvent("input", true, true);
-                    combo.focusNode.dispatchEvent(event);
-                }
-            });
+			self.own(
+			    self.widget.on("change", function(newValue) {
+			        // Votre logique de gestion du changement ici
+			        self.onChange(newValue, self._elementData);
+			    })
+			);
         },
 		
-		getValues: function(combo, contextId) {
+		_getValues: function() {
 			var self = this;
 			
 			var contributorUrl = JAZZ.getApplicationBaseUrl() + "rpt/repository/foundation?fields=foundation/(" + 
-				"projectArea[itemId=" + contextId+ "]/teamMembers/(userId|name)|" + 
-				"teamArea[itemId="+ contextId+ "]/teamMembers/(userId|name))";
+				"projectArea[itemId=" + self._cellContextId.value + "]/teamMembers/(userId|name)|" + 
+				"teamArea[itemId="+ self._cellContextId.value + "]/teamMembers/(userId|name))";
 				
 			XHR.oslcXmlGetRequest(contributorUrl).then(
 				function (data) {
@@ -102,7 +101,7 @@ define([
 					var contributors = [].concat(paMembers, taMembers);
 												
 					var newStore = new Memory({ data: contributors });
-					combo.set("store", newStore);  
+					self.widget.set("store", newStore);  
 				}, 
 				function(err) {
 					console.error("Erreur chargement category:", err);
@@ -115,7 +114,19 @@ define([
 		    if (!element) return null;
 		    var n = element.getElementsByTagName(tagName);
 		    return (n && n[0] && n[0].textContent) || null;
+		},
+		
+		destroy: function() {
+		    var self = this;
+		    if (self.widget && typeof self.widget.destroy === 'function') {
+		        self.widget.destroy();
+		    }
+			
+			self.inherited(arguments);
+
+		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
 		}
+		
     });
 
 });
