@@ -56,8 +56,24 @@ define([
 
 			self.own(
 			    self.widget.on("change", function(newValue) {
-			        // Votre logique de gestion du changement ici
-			        self.onChange(newValue, self._elementData);
+					var store = self.widget.get("store");
+
+					// 🎯 Étape 2 : Chercher l'objet complet dans le store en utilisant la valeur (name)
+					var selectedItem = store.query({ name: newValue })[0]; 
+
+					var selectedId = null;
+
+					if (selectedItem && selectedItem.id) {
+						selectedId = selectedItem.id;
+					}
+
+					// Si l'utilisateur efface le champ, l'ID est null/vide
+					if (newValue === "") {
+						selectedId = ""; 
+					}
+
+					// 🎯 Étape 3 : Appeler le callback avec l'ID
+					self.onChange(selectedId, self.element);
 			    })
 			);
         },
@@ -66,8 +82,8 @@ define([
 			var self = this;
 			
 			var contributorUrl = JAZZ.getApplicationBaseUrl() + "rpt/repository/foundation?fields=foundation/(" + 
-				"projectArea[itemId=" + self._cellContextId.value + "]/teamMembers/(userId|name)|" + 
-				"teamArea[itemId="+ self._cellContextId.value + "]/teamMembers/(userId|name))";
+				"projectArea[itemId=" + self._cellContextId.value + "]/teamMembers/(reportableUrl|userId|name)|" + 
+				"teamArea[itemId="+ self._cellContextId.value + "]/teamMembers/(reportableUrl|userId|name))";
 				
 			XHR.oslcXmlGetRequest(contributorUrl).then(
 				function (data) {
@@ -75,12 +91,11 @@ define([
 					var projectArea = Array.from(data.getElementsByTagName("projectArea") || []);
 					var teamArea = Array.from(data.getElementsByTagName("teamArea") || []);
 					
-					
 					var paMembers = projectArea.reduce(function(acc, pa) {
 					    var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
 					    nodes.forEach(function(pm) {
 					        acc.push({
-					            id: self.getFirstTagText(pm, "userId"),
+					            id: extractJTSUrl(self.getFirstTagText(pm, "reportableUrl")) + "users/" +  self.getFirstTagText(pm, "userId"),
 					            name: self.getFirstTagText(pm, "name")
 					        });
 					    });
@@ -91,7 +106,7 @@ define([
 					    var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
 					    nodes.forEach(function(tm) {
 					        acc.push({
-					            id: self.getFirstTagText(tm, "userId"),
+								id: extractJTSUrl(self.getFirstTagText(tm, "reportableUrl")) + "users/" +  self.getFirstTagText(tm, "userId"),
 					            name: self.getFirstTagText(tm, "name")
 					        });
 					    });
@@ -107,6 +122,26 @@ define([
 					console.error("Erreur chargement category:", err);
 				}
 			);
+			
+			function extractJTSUrl(fullUrl) {
+			    // 1. Créer une URL object pour un parsing facile (standard dans les navigateurs modernes)
+			    var urlParser = new URL(fullUrl);
+
+			    // 2. Extraire l'URL de base (Protocole + Hôte + Port)
+			    // Exemple: https://jazz-server:9443
+			    var baseUrl = urlParser.protocol + '//' + urlParser.host;
+
+			    // 3. Extraire les segments du chemin
+			    // pathSegments[0] sera vide car le chemin commence par '/', 
+			    // pathSegments[1] sera le premier segment (ex: 'jts' ou 'ccm')
+			    var pathSegments = urlParser.pathname.split('/');
+			    
+			    // 4. Déterminer le contexte de l'application (ex: 'jts')
+			    // Le premier segment non vide après l'hôte (généralement l'indice 1)
+			    var appContext = pathSegments[1]; 
+
+			    return baseUrl + "/" + appContext + "/";
+			}
 			
 		},
 		

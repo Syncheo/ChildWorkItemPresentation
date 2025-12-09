@@ -9,10 +9,6 @@ define([
     "dijit/_TemplatedMixin",
     "dijit/_WidgetsInTemplateMixin",
     "dijit/Tooltip",
-    "dijit/form/TextBox",
-    "dijit/form/Select",
-    "dijit/form/DateTextBox",
-    "dijit/form/CheckBox",
     "dojo/on",
     "dojo/dom-construct",
     "dojo/text!./templates/ChildRow.html",
@@ -23,11 +19,11 @@ define([
 	"./cells/CategoryCell",
 	"./cells/ContributorCell",
 	"./cells/DeliverableCell",
-	"./cells/StateCell"
+	"./cells/StateCell",
+	"./cells/IterationCell"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-    Tooltip, TextBox, Select, DateTextBox, CheckBox,
-    on, domConstruct, template, 
+    Tooltip, on, domConstruct, template, 
 	StandardCell,  LinkCell, EditableTextCell, 
 	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell, StateCell) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
@@ -52,7 +48,6 @@ define([
 				self.changed = {};
 				self.allCells = [];
 				
-				console.log(self.childData);
 				self.inherited(arguments);
 				
 				if (!self.childData) return;
@@ -109,6 +104,12 @@ define([
 							});						
 						} else if (childElemt.type === "contributor" ) {
 							var cell = new ContributorCell({
+								element: childElemt, 
+								contextId: contextId, 
+								onChange: self.callback.bind(self)
+							});
+						} else if (childElemt.type === "iteration" ) {
+							var cell = new IterationCell({
 								element: childElemt, 
 								contextId: contextId, 
 								onChange: self.callback.bind(self)
@@ -170,7 +171,6 @@ define([
 				if (self.changed[objectUrl] === undefined) self.changed[objectUrl] = {};
 				self.changed[objectUrl][fieldName] = newValue;
 				console.log("Champ modifié :", objectUrl, ": " , fieldName, "->", newValue);
-				console.log(self.changed);
 				self.onChange(self.changed);
 			},
 			
@@ -179,12 +179,6 @@ define([
 			}
 			
 
-/*			_onGlobalSave: function(evt) {
-				if (Object.keys(this.changed).length !== 0) {
-					console.log("👉 Le bouton SAVE global a été cliqué !");
-					console.log("Changed : ", this.changed)
-				}
-			}*/
 			
             // --- Summary ---
    

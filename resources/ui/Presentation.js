@@ -15,45 +15,47 @@ define([
 	"./JazzHelpers",
 	"./ChildRow",
 	"./ChildHeader",
+	"./WorkItemBatchUpdater",
 	"dojo/text!./templates/Presentation.html",
 	"dojo/domReady!"
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Tooltip, 
-		Deferred, on, all, query, domConstruct, domStyle, XHR, JAZZ, ChildRow, ChildHeader, template) {
+		Deferred, on, all, query, domConstruct, domStyle, 
+		XHR, JAZZ, ChildRow, ChildHeader, WorkItemBatchUpdater, template) {
 
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.Presentation",
 	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 		
 		wellKnownAttributes : [
-{name: "contextId", 		rest: "contextId", 																		value: "", visible: true,  editable: false, 			type: "string"},
-{name: "paContextId", 		rest: "projectArea/contextId", 															value: "", visible: true,  editable: false, 			type: "string"},
-{name: "Url", 				rest: "itemId", 																		value: "", visible: true,  editable: false, 			type: "string"},
-{name: "Commentaires", 		rest: "comments/content", 																value: "", visible: false, editable: false, 			type: "array"},
-{name: "Durée", 			rest: "correctedEstimate", 																value: "", visible: false, editable: "configurable", 	type: "integer"},
-{name: "Created By", 		rest: "creator/name", 																	value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Creation Date",		rest: "creationDate", 																	value: "", visible: false, editable: false, 			type: "timestamp"},
-{name: "Description", 		rest: "formattedDescription", 															value: "", visible: false, editable: "configurable", 	type: "string"},
-{name: "Due Date", 			rest: "dueDate", 																		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-{name: "Estimate", 			rest: "duration", 																		value: "", visible: false, editable: "configurable", 	type: "integer"},
-{name: "Filed Against", 	rest: "category/name", 																	value: "", visible: false, editable: "configurable", 	type: "category"},
-{name: "Found In", 			rest: "foundIn/name", 																	value: "", visible: false, editable: "configurable", 	type: "deliverable"},
-{name: "Id", 				rest: "id", 																			value: "", visible: true,  editable: false, 			type: "integer"},
-{name: "Modified By", 		rest: "modifiedBy/name", 																value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Modified Date", 	rest: "modified", 																		value: "", visible: false, editable: false, 			type: "timestamp"},
-{name: "Owned By", 			rest: "owner/name", 																	value: "", visible: true,  editable: "configurable", 	type: "contributor"},
-{name: "Planned For", 		rest: "target/name", 																	value: "", visible: false, editable: "configurable", 	type: "iteration"},
-{name: "Priority", 			rest: "priority/name", 																	value: "", visible: false, editable: "configurable", 	type: "priority"},
-{name: "Zone de projet",	rest: "projectArea/name", 																value: "", visible: false, editable: false, 			type: "string"},
-{name: "Resolution", 		rest: "resolution", 																	value: "", visible: false, editable: "configurable",	type: "resolution"},
-{name: "Resolution Date",	rest: "resolutionDate", 																value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-{name: "Resolved By", 		rest: "resolver/name", 																	value: "", visible: false, editable: false, 			type: "constributor"},
-{name: "Severity", 			rest: "severity/name", 																	value: "", visible: false, editable: "configurable", 	type: "severity"},
-{name: "State", 			rest: "state/name|stateTransitions/(targetStateId|sourceProjectArea/states/(id|name))",	value: "", visible: true,  editable: "configurable", 	type: "state"},
-{name: "Start Date", 		rest: "plannedStartDate", 																value: "", visible: false, editable: "configurable",	type: "timestamp"},
-{name: "Subscribed By", 	rest: "subscriptions/name", 															value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Summary", 			rest: "summary", 																		value: "", visible: true,  editable: "configurable", 	type: "string"},
-{name: "Tags", 				rest: "tags", 																			value: "", visible: false, editable: "configurable", 	type: "pipearray"},
-{name: "Time Spent", 		rest: "timeSpent", 																		value: "", visible: false, editable: "configurable", 	type: "duration"},
-{name: "Type", 				rest: "type/name", 																		value: "", visible: true,  editable: false, 			type: "string"}
+{name: "contextId", 		rest: "contextId", 				value: "", visible: true,  editable: false, 			type: "string"},
+{name: "paContextId", 		rest: "projectArea/contextId", 	value: "", visible: true,  editable: false, 			type: "string"},
+{name: "Url", 				rest: "itemId", 				value: "", visible: true,  editable: false, 			type: "string"},
+{name: "Commentaires", 		rest: "comments/content", 		value: "", visible: false, editable: false, 			type: "array"},
+{name: "Durée", 			rest: "correctedEstimate", 		value: "", visible: false, editable: "configurable", 	type: "integer"},
+{name: "Created By", 		rest: "creator/name", 			value: "", visible: false, editable: false, 			type: "contributor"},
+{name: "Creation Date",		rest: "creationDate", 			value: "", visible: false, editable: false, 			type: "timestamp"},
+{name: "Description", 		rest: "formattedDescription", 	value: "", visible: false, editable: "configurable", 	type: "string"},
+{name: "Due Date", 			rest: "dueDate", 				value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+{name: "Estimate", 			rest: "duration", 				value: "", visible: false, editable: "configurable", 	type: "integer"},
+{name: "Filed Against", 	rest: "category/name",			value: "", visible: false, editable: "configurable", 	type: "category"},
+{name: "Found In", 			rest: "foundIn/name", 			value: "", visible: false, editable: "configurable", 	type: "deliverable"},
+{name: "Id", 				rest: "id", 					value: "", visible: true,  editable: false, 			type: "integer"},
+{name: "Modified By", 		rest: "modifiedBy/name", 		value: "", visible: false, editable: false, 			type: "contributor"},
+{name: "Modified Date", 	rest: "modified", 				value: "", visible: false, editable: false, 			type: "timestamp"},
+{name: "Owned By", 			rest: "owner/name",				value: "", visible: true,  editable: "configurable", 	type: "contributor"},
+{name: "Planned For", 		rest: "target/name", 			value: "", visible: false, editable: "configurable", 	type: "iteration"},
+{name: "Priority", 			rest: "priority/name", 			value: "", visible: false, editable: "configurable", 	type: "priority"},
+{name: "Zone de projet",	rest: "projectArea/name", 		value: "", visible: false, editable: false, 			type: "string"},
+{name: "Resolution", 		rest: "resolution", 			value: "", visible: false, editable: "configurable",	type: "resolution"},
+{name: "Resolution Date",	rest: "resolutionDate", 		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
+{name: "Resolved By", 		rest: "resolver/name", 			value: "", visible: false, editable: false, 			type: "constributor"},
+{name: "Severity", 			rest: "severity/name", 			value: "", visible: false, editable: "configurable", 	type: "severity"},
+{name: "State", 			rest: "state/name",				value: "", visible: true,  editable: "configurable", 	type: "state"},
+{name: "Start Date", 		rest: "plannedStartDate", 		value: "", visible: false, editable: "configurable",	type: "timestamp"},
+{name: "Subscribed By", 	rest: "subscriptions/name", 	value: "", visible: false, editable: false, 			type: "contributor"},
+{name: "Summary", 			rest: "summary", 				value: "", visible: true,  editable: "configurable", 	type: "string"},
+{name: "Tags", 				rest: "tags", 					value: "", visible: false, editable: "configurable", 	type: "pipearray"},
+{name: "Time Spent", 		rest: "timeSpent", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
+{name: "Type", 				rest: "type/name", 				value: "", visible: true,  editable: false, 			type: "string"}
 		],
 					
 		//https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=11]/stateTransitions/(targetStateId|sourceProjectArea/states/*)
@@ -84,10 +86,24 @@ define([
 		},
 		
 		postCreate: function() {
+			var self = this;
+			
             this.inherited(arguments);
             if (this.workItem && this.workItem.id > 0) {
                 this.createChildTable(this.workItem.id);
             }
+			setTimeout(function () {
+				var globalSaveBtn = document.querySelector('button.j-button-primary[dojoattachpoint="saveCmd"]');
+				if (globalSaveBtn) {
+					self.own(
+						on(globalSaveBtn, "click", function (evt) {
+							self._onGlobalSave(evt);
+						})
+					);
+				} else {
+					console.warn("⚠️ Bouton Save global non trouvé !");
+				 }
+			 }, 300);		
         },
 		
 		
@@ -181,36 +197,6 @@ define([
 								childAttributes.type = enumerations ? enumerations.type : childAttributes.type;
 								childAttributes.values = enumerations ? enumerations.values : [];
 							}
-						} else if (childAttributes.rest.includes("state")) {
-							var stateName = self.getFirstTagText(c.getElementsByTagName("state")[0], "name");
-							if (childAttributes.editable) {
-								var stateTransitions = Array.from(
-								    c.getElementsByTagName("stateTransitions") || []
-								);
-								var targetStates = stateTransitions.map(function(st) {
-							        if (!st) return null;
-									var targetStateId = self.getFirstTagText(st, "targetStateId");
-									if (!targetStateId) return null;
-
-									var sourceProjectArea = st.getElementsByTagName("sourceProjectArea")[0];
-									if (!sourceProjectArea) return null;
-
-									var states = Array.from(sourceProjectArea.getElementsByTagName("states") || []);
-									var matched = states.map(function(state) {
-										if (!state) return null;
-										var id = self.getFirstTagText(state, "id");
-										if (id !== targetStateId) return null;
-										return self.getFirstTagText(state, "name");
-									}).filter(function(x) { return x; }); // retire null/undefined
-									return matched[0] || null;
-								
-								}).filter(function(x) { return x; }); 
-
-
-								if (!targetStates.includes(stateName)) targetStates.unshift(stateName);
-								childAttributes.value = stateName;
-								childAttributes.values = targetStates;
-							}
 						} else if (childAttributes.rest.includes("/")) {
 							childAttributes.value = self.getValueByNameAttribute(c, childAttributes.rest)
 						} else {
@@ -220,17 +206,8 @@ define([
 
 						}
 						child.push(childAttributes);
-					}
-					console.log(child)		
+					}		
 					self.childs[i] = child;
-					
-					
-					//var id = children[i].getElementsByTagName("id")[0].textContent;
-					//var summary = children[i].getElementsByTagName("summary")[0].textContent;
-					//var stateName = children[i].getElementsByTagName("state")[0].getElementsByTagName("name")[0].textContent;
-					//var ownerName = children[i].getElementsByTagName("owner")[0].getElementsByTagName("name")[0].textContent;
-					//var type = children[i].getElementsByTagName("type")[0].getElementsByTagName("name")[0].textContent;
-	
 				}
 
 				// sort states
@@ -264,56 +241,31 @@ define([
 		    }
 		    // Object.assign ajoute/écrase les propriétés de 'object' dans 'self.changedElements'
 		    Object.assign(self.changedElements, object);
-		    
+
 		    console.log("Données en cours de modification (changedElements):", self.changedElements);
 		    
-		    // 2. Tenter d'activer l'état 'Dirty' sur l'éditeur principal
-		    
 		    if (self._editorContext) {
-		        
-		        // Tentative A (La plus probable pour l'API EWM)
-		        if (typeof self._editorContext.setWorkItemModified === 'function') {
-		            
-		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via setWorkItemModified(true).");
-		            self._editorContext.setWorkItemModified(true); 
-		            
-		            // Sortir si la méthode fonctionne pour éviter les appels inutiles.
-		            return;
-		            
-		        } 
-		        
-		        // Tentative B (Variante de l'API Work Item)
-		        if (typeof self._editorContext.markWorkItemModified === 'function') {
-		            
-		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via markWorkItemModified(true).");
-		            self._editorContext.markWorkItemModified(true);
-		            return;
-		            
-		        }
-		        
-		        // Tentative C (Dernière chance avec les conventions génériques non EWM)
-		        if (typeof self._editorContext.setModified === 'function') {
-		            
-		            console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via setModified(true).");
-		            self._editorContext.setModified(true);
-		            return;
-		            
-		        }
-				
 				if (typeof self._editorContext.markDirty === 'function') {
-				    
-				    console.log("✅ SUCCESS : Activation du bouton 'Enregistrer' via markDirty(true).");
-				    self._editorContext.markDirty(true);
+					self._editorContext.markDirty(true);
 				    return;
 				    
-				}
-
-		        // Si aucune des méthodes n'a fonctionné :
-		        console.error("❌ Échec de la notification : Aucune méthode EWM/Dojo connue pour marquer l'éditeur comme modifié n'a été trouvée.");
-		        
+				}		        
 		    } else {
 		        console.error("ERREUR : _editorContext (parentController) n'est pas défini. Impossible de notifier l'éditeur.");
 		    }
+		},
+		
+		_onGlobalSave: function(evt) {
+			var self = this;
+			console.log(self.changedElements);
+			WorkItemBatchUpdater.processBatchUpdates(self.changedElements)
+			    .then(function(results) {
+			        console.log("Toutes les mises à jour de Work Items sont terminées.", results);
+			    })
+			    .otherwise(function(error) {
+			        console.error("Au moins une mise à jour a échoué. Arrêt du processus global.");
+			    });
+				
 		},
 		
 		/**
@@ -342,10 +294,6 @@ define([
 
 			self.normalizeFieldValues(allChilds);
 			
-			console.log("All childs:", allChilds);
-			console.log("childrenTable reference:", self.childTable);
-			console.log("childrenTable in DOM?", document.body.contains(self.childTable));
-
 			// Vider le tbody
 			domConstruct.empty(self.childrenHeader);
 			domConstruct.empty(self.childrenBody);
@@ -409,6 +357,9 @@ define([
 			    }
 			}
 		},
+		
+
+		
 		
 		getCustomAttributesBykey: function(workItem, key) {
 
@@ -511,10 +462,6 @@ define([
 		    var n = element.getElementsByTagName(tagName);
 		    return (n && n[0] && n[0].textContent) || null;
 		},
-		
-/*		_onGlobalSave: function(evt) {
-		    console.log("👉 Le bouton SAVE global a été cliqué !");
-		},*/
 		
 		splitByComma: function(str) {
 		    if (typeof str !== "string") {

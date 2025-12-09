@@ -5,6 +5,6 @@ import com.ibm.team.repository.common.transport.ITeamRestService;
 /**
  * Interface marker pour le service REST Child Workitem
  */
-public interface INewUtilityService extends ITeamRestService {
+public interface ISaveWorkitemService extends ITeamRestService {
     // Pas de méthodes pour le marker, mais tu peux en ajouter si nécessaire
 }

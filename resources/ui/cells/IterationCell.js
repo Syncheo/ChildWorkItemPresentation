@@ -17,17 +17,17 @@ define([
 	_WidgetBase,
 	XHR, JAZZ, domConstruct, on){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.StateCell", [_WidgetBase], {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.IterationCell", [_WidgetBase], {
 
         element: {},
-		workItemId: "",
+		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
 
         constructor: function(args){
-			this.element = args.element || {};
-			this.workItemId = args.workItemId || {}
-			this.onChange = args.onChange || function(){};
+            this.element = args.element || {};
+			this.paContextId = args.paContextId || {}
+            this.onChange = args.onChange || function(){};
         },
 
         render: function(tdElement){
@@ -42,10 +42,10 @@ define([
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
-			self.widget = new ComboBox({
+            self.widget = new ComboBox({
                 value: self.element.value,
                 store: store,
-                searchAttr: "name",
+                searchAttr: "name", 
                 autoComplete: false
             }, container);
 
@@ -53,19 +53,15 @@ define([
 			
 			self.getValues();
 
-
 			self.own(
 			    self.widget.on("change", function(newValue) {
-					// La 'newValue' ici est la chaîne de caractères (le 'name' affiché).
-					// // 🎯 Étape 1 : Accéder au store du ComboBox
-					
 					var store = self.widget.get("store");
-					
+
 					// 🎯 Étape 2 : Chercher l'objet complet dans le store en utilisant la valeur (name)
 					var selectedItem = store.query({ name: newValue })[0]; 
-					
+
 					var selectedId = null;
-					
+
 					if (selectedItem && selectedItem.id) {
 						selectedId = selectedItem.id;
 					}
@@ -76,45 +72,42 @@ define([
 					}
 
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
-			        self.onChange(selectedId, self.element);
+					self.onChange(selectedId, self.element);
 			    })
 			);
+			
+            // Déclencher le callback onChange
+   /*         on(self.widget, "change", function(val){
+				self.onChange(val, self.element);
+            });*/
         },
 		
 		getValues: function() {
 			var self = this;
 			
-			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-				"service/fr.syncheo.ewm.childitem.server.IGetStatesService" +
-				"?workItemId=" + self.workItemId.value;
+			var ccmUrl = JAZZ.getApplicationBaseUrl() 
+			var iterationUrl =  ccmUrl +
+				"rpt/repository/workitem?fields=workitem/iteration[contextId=" + self.paContextId.value + "]/(itemId|itemType|name)";
 				
-			XHR.oslcJsonGetRequest(categoryUrl).then(
-				function (jsonString) {
-					
-					var jsonObjet = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
-					var actionsList = jsonObjet.states
-						.map(function(stateObject) {
-							if (stateObject.action) {
-								return {
-									id: stateObject.action.id,
-									name: stateObject.action.name
-								};
-							}
-							return null;
-						})
-						.filter(function(action) {
-							return action !== null;
-						});
-					
-						
-						var newStore = new Memory({ data: actionsList });
-						self.widget.set("store", newStore);  
-					}, 
-					function(err) {
-						console.error("Erreur chargement state:", err);
-					}
-				);
-			
+			XHR.oslcXmlGetRequest(iterationUrl).then(
+				function (data) {
+					var iterations = Array.from(data.getElementsByTagName("iteration") || [] );
+									
+					var iters = iterations.map(function(d) {
+						return {
+							id: ccmUrl + "resource/itemOid/" + self.getFirstTagText(d, "itemType") + "/" + self.getFirstTagText(d, "itemId"), 
+							name: self.getFirstTagText(d, "name")
+						}
+					});
+
+					var newStore = new Memory({ data: iters });
+					self.widget.set("store", newStore); 	
+				},
+				function(err) {
+					console.error("Erreur chargement iteration:", err);
+				}
+			);
+		
 		},
 		
 		getFirstTagText: function(element, tagName) {
@@ -129,6 +122,7 @@ define([
 		        self.widget.destroy();
 		    }
 			self.inherited(arguments);
+
 		    // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
 		}
 		

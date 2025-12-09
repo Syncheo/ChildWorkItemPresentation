@@ -55,8 +55,24 @@ define([
 
 			self.own(
 			    self.widget.on("change", function(newValue) {
-			        // Votre logique de gestion du changement ici
-			        self.onChange(newValue, self.element);
+					var store = self.widget.get("store");
+
+					// 🎯 Étape 2 : Chercher l'objet complet dans le store en utilisant la valeur (name)
+					var selectedItem = store.query({ name: newValue })[0]; 
+
+					var selectedId = null;
+
+					if (selectedItem && selectedItem.id) {
+						selectedId = selectedItem.id;
+					}
+
+					// Si l'utilisateur efface le champ, l'ID est null/vide
+					if (newValue === "") {
+						selectedId = ""; 
+					}
+
+					// 🎯 Étape 3 : Appeler le callback avec l'ID
+					self.onChange(selectedId, self.element);
 			    })
 			);
 			
@@ -69,8 +85,9 @@ define([
 		getValues: function() {
 			var self = this;
 			
-			var deliverableUrl = JAZZ.getApplicationBaseUrl() + 
-				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + self.paContextId.value + "]/(itemId|name)";
+			var ccmUrl = JAZZ.getApplicationBaseUrl() 
+			var deliverableUrl =  ccmUrl +
+				"rpt/repository/workitem?fields=workitem/deliverable[contextId=" + self.paContextId.value + "]/(itemId|itemType|name)";
 				
 			XHR.oslcXmlGetRequest(deliverableUrl).then(
 				function (data) {
@@ -78,7 +95,7 @@ define([
 									
 					var devs = deliverables.map(function(d) {
 						return {
-							id: self.getFirstTagText(d, "itemId"),
+							id: ccmUrl + "resource/itemOid/" + self.getFirstTagText(d, "itemType") + "/" + self.getFirstTagText(d, "itemId"), 
 							name: self.getFirstTagText(d, "name")
 						}
 					});

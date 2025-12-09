@@ -14,7 +14,7 @@
                      
              <service kind="MODELLED_REST"
                      name="Nouveau Service d'Outil REST"
-                     uri="fr.syncheo.ewm.childitem.server.INewUtilityService" 
+                     uri="fr.syncheo.ewm.childitem.server.ISaveWorkitemService" 
                      version="1"/>
         </component>
     </extension>
@@ -35,9 +35,9 @@
 
     <extension point="com.ibm.team.repository.service.serviceProvider">
         <serviceProvider componentId="fr.syncheo.ewm.childitem"
-                         implementationClass="fr.syncheo.ewm.childitem.server.NewUtilityService">
+                         implementationClass="fr.syncheo.ewm.childitem.server.SaveWorkitemService">
             <provides>
-                <providedService interface="fr.syncheo.ewm.childitem.server.INewUtilityService"/>
+                <providedService interface="fr.syncheo.ewm.childitem.server.ISaveWorkitemService"/>
             </provides>
             <prerequisites>
             	<requiredService interface="com.ibm.team.repository.service.IRepositoryItemService"/>
