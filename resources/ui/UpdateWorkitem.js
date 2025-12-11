@@ -69,33 +69,94 @@ define([
 
 			root.appendChild(desc);
 			
-			if (data["Filed Against"]) {
-				var filedAgainstElement = xmlDoc.createElementNS(this.rtcCmNs, "rtc_cm:filedAgainst");
-				filedAgainstElement.setAttributeNS(this.rdfNs, "rdf:resource", data["Filed Against"]);
-				desc.appendChild(filedAgainstElement);
-			}
-					
-			if (data["Found In"]) {
-				var foundInElement = xmlDoc.createElementNS(this.rtcCmNs, "rtc_cm:foundIn");
-				foundInElement.setAttributeNS(this.rdfNs, "rdf:resource", data["Found In"]);
-				desc.appendChild(foundInElement);
-			}
+				
+			// Champs Littéraux (TEXTE)
+			this._addLiteralElement(xmlDoc, desc, this.dctermsNs, "dcterms:title", data["Summary"] );
+			// Gérer les Tags (Littéral avec un type de données XSD)
+			// Le contenu doit être déjà joint avec ", " si c'est une liste
+			this._addLiteralElement(xmlDoc, desc, this.dctermsNs, "dcterms:subject", data["Tags"], "http://www.w3.org/2001/XMLSchema#string");
+			// Champs Ressources (LIENS / URI)
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:filedAgainst", data["Filed Against"]);
+
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:foundIn", data["Found In"]	);
+
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:plannedFor", data["Planned For"] );
+
+			this._addResourceElement(xmlDoc, desc, this.dctermsNs, "dcterms:contributor", data["Owned By"] );
+
+			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:severity", data["Severity"] );
+
+			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:priority", data["Priority"] );
 			
-			if (data["Owned By"]) {
-				var ownedByElement = xmlDoc.createElementNS(this.dctermsNs, "dcterms:contributor");
-				ownedByElement.setAttributeNS(this.rdfNs, "rdf:resource", data["Owned By"]);
-				ownedByElement.removeAttributeNS("http://www.w3.org/2000/xmlns/", "dcterms"); 
-				// ownedByElement.removeAttribute("xmlns:dcterms");	
-				desc.appendChild(ownedByElement);
-			}
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["Resolution"] );
+			//<rtc_cm:resolution rdf:resource="https://jazz-server:9443/ccm/oslc/workflows/_pG5nILDqEfC38tEFCAkmbQ/resolutions/com.ibm.team.workitem.defectWorkflow/3"/>
 			
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["Resolution"] );
+
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:timeSpent", data["Durée"], "http://www.w3.org/2001/XMLSchema#integer");
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:estimate", data["Estimate"], "http://www.w3.org/2001/XMLSchema#integer");
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:correctedEstimate", data["Time Spent"], "http://www.w3.org/2001/XMLSchema#integer");
+			
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:due", data["Due Date"], "http://www.w3.org/2001/XMLSchema#dateTime");
+
+
+									
+			// --- Traitement spécial pour l'action de transition (inchangé) ---
 			if (data["State"]) {
-				url = url + "?_action=" + data["State"];
+			    // Si la transition change, on modifie l'URL, pas le XML
+			    url = url + "?_action=" + data["State"];
 			}
 			var xmlString = new XMLSerializer().serializeToString(xmlDoc);
 			console.log(xmlString);
             
             return {data: xmlString, url: url };
-        }
+        },
+		
+		/**
+		 * Crée et attache un élément XML de type RESSOURCE (avec rdf:resource).
+		 * @param {XMLDocument} xmlDoc Le document XML.
+		 * @param {Element} desc Le nœud parent (rdf:Description).
+		 * @param {string} nsUri L'URI du namespace de l'élément (ex: this.rtcCmNs).
+		 * @param {string} name Le nom qualifié de l'élément (ex: "rtc_cm:filedAgainst").
+		 * @param {string} value L'URI de la ressource.
+		 */
+		
+		_addResourceElement: function(xmlDoc, desc, nsUri, name, value) {
+		    if (!value) return; // Sortir si la valeur est vide
+
+		    var element = xmlDoc.createElementNS(nsUri, name);
+		    // Utilisation de l'URI RDF (this.rdfNs) pour l'attribut rdf:resource
+		    element.setAttributeNS(this.rdfNs, "rdf:resource", value);
+		    desc.appendChild(element);
+		},
+		
+		/**
+		 * Crée et attache un élément XML de type LITTÉRAL (avec textContent).
+		 * @param {XMLDocument} xmlDoc Le document XML.
+		 * @param {Element} desc Le nœud parent (rdf:Description).
+		 * @param {string} nsUri L'URI du namespace de l'élément (ex: this.dctermsNs).
+		 * @param {string} name Le nom qualifié de l'élément (ex: "dcterms:title").
+		 * @param {string} value Le contenu textuel.
+		 * @param {string} [dataType] L'URI de rdf:datatype (ex: "http://www.w3.org/2001/XMLSchema#string").
+		 */
+		_addLiteralElement: function(xmlDoc, desc, nsUri, name, value, dataType) {
+		    if (!value) return; // Sortir si la valeur est vide
+
+		    var element = xmlDoc.createElementNS(nsUri, name);
+		    element.textContent = value;
+		    
+		    if (dataType) {
+		        // Ajoute l'attribut rdf:datatype si spécifié (utile pour les tags/sujets)
+		        element.setAttributeNS(this.rdfNs, "rdf:datatype", dataType);
+		    } else if (name === "dcterms:title") {
+		        // Ajout spécifique pour le titre (généralement requis par EWM/OSLC)
+		        element.setAttributeNS(this.rdfNs, "rdf:parseType", "Literal");
+		    }
+		    
+		    desc.appendChild(element);
+		}
+		
+		
+		
     };
 });

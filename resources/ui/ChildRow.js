@@ -20,12 +20,18 @@ define([
 	"./cells/ContributorCell",
 	"./cells/DeliverableCell",
 	"./cells/StateCell",
-	"./cells/IterationCell"
+	"./cells/IterationCell",
+	"./cells/PriorityCell",
+	"./cells/ResolutionCell",
+	"./cells/SeverityCell",
+	"./cells/TimeStampCell",
+	"./cells/DurationCell",
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, on, domConstruct, template, 
 	StandardCell,  LinkCell, EditableTextCell, 
-	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell, StateCell) {
+	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell, StateCell,
+	IterationCell, ResolutionCell, SeverityCell, TimeStampCell, DurationCell) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 			
@@ -119,12 +125,40 @@ define([
 								element: childElemt, 
 								paContextId: paContextId, 
 								onChange: self.callback.bind(self)
-							});						
+							});	
+						} else if (childElemt.type === "priority" ) {
+							var cell = new PriorityCell({
+								element: childElemt, 
+								paContextId: paContextId, 
+								onChange: self.callback.bind(self)
+							});
+						} else if (childElemt.type === "severity" ) {
+							var cell = new SeverityCell({
+								element: childElemt, 
+								paContextId: paContextId, 
+								onChange: self.callback.bind(self)
+							});
+						} else if (childElemt.type === "resolution" ) {
+							var cell = new ResolutionCell({
+								element: childElemt, 
+								paContextId: id, 
+								onChange: self.callback.bind(self)
+							});					
 						} else if (childElemt.type === "enumeration" ) {
 							var cell = new ComboBoxCell({
 								element: childElemt,  
 								onChange: self.callback.bind(self)
 							});				
+						} else if (childElemt.type === "duration" ) {
+							var cell = new DurationCell({
+								element: childElemt,  
+								onChange: self.callback.bind(self)
+							});	
+						} else if (childElemt.type === "timestamp" ) {
+							var cell = new TimeStampCell({
+								element: childElemt,  
+								onChange: self.callback.bind(self)
+							});	
 						} else if (childElemt.type === "state" ) {
 							var cell = new StateCell({
 								element: childElemt, 

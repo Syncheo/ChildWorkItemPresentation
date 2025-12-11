@@ -45,14 +45,6 @@ define([
                 self.widget.focusNode.style.boxSizing = "border-box";
             }
 
-/*			self.own(
-			    self.widget.on("change", function(newValue) {
-			        // Votre logique de gestion du changement ici
-					console.log("Nouvelle valeur :", newValue);
-					self.onChange(newValue, self.element);
-			    })
-			);*/
-			
 			self.own(
 			    on(self.widget.focusNode, "input", function(evt) {
 			        var val = evt.target.value;  // valeur réellement saisie
@@ -60,13 +52,6 @@ define([
 			        self.onChange(val, self.element);
 			    })
 			);
-			
-            // Écoute du changement de valeur
-/*			on(self.widget.focusNode, "input", function(evt) {
-			    var val = evt.target.value;  // valeur réellement saisie
-			    console.log("Nouvelle valeur :", val);
-				self.onChange(val, self.element);
-			});*/
 			
 		},
 		

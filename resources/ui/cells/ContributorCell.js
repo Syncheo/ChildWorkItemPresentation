@@ -10,11 +10,12 @@ define([
     "dijit/form/ComboBox",
     "dojo/store/Memory",
 	"dojo/dom-construct",
+	"dojo/Deferred",
 	"dojo/on",
 	"../XhrHelpers",
 	"../JazzHelpers"
 ], function(declare, _WidgetBase, ComboBox, Memory, 
-	domConstruct, on, XHR, JAZZ){
+	domConstruct, Deferred, on, XHR, JAZZ){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", 
 		[_WidgetBase], 
@@ -38,22 +39,33 @@ define([
 			    style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
 			}, tdElement);
 
+			var initialValue = self.element.value || "";
+
 			
             // Store temporaire vide au départ
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
 			self.widget = new ComboBox({
-			                value: self._elementData.value,
-			                store: store,
-			                searchAttr: "name",
-			                autoComplete: false
-			            }, container);
+                value: initialValue,
+                store: store,
+                searchAttr: "name",
+                autoComplete: false
+			}, container);
 						
             self.widget.startup();
 			
 			self._getValues();
 
+			if (self.element.value) {
+			    self.fetchInitialContributorName().then(function(contributorName) {
+			        if (contributorName) {
+			            // Mettre à jour la valeur affichée du ComboBox avec le nom lisible
+			            self.widget.set("value", contributorName);
+			        }
+			    });
+			}
+			
 			self.own(
 			    self.widget.on("change", function(newValue) {
 					var store = self.widget.get("store");
@@ -95,7 +107,7 @@ define([
 					    var nodes = Array.from(pa.getElementsByTagName("teamMembers") || []);
 					    nodes.forEach(function(pm) {
 					        acc.push({
-					            id: extractJTSUrl(self.getFirstTagText(pm, "reportableUrl")) + "users/" +  self.getFirstTagText(pm, "userId"),
+					            id: self.extractJTSUrl(self.getFirstTagText(pm, "reportableUrl")) + "users/" +  self.getFirstTagText(pm, "userId"),
 					            name: self.getFirstTagText(pm, "name")
 					        });
 					    });
@@ -121,28 +133,63 @@ define([
 				function(err) {
 					console.error("Erreur chargement category:", err);
 				}
-			);
+			);	
+		},
+		
+		fetchInitialIterationName: function() {
+		    var self = this;
+		    var deferred = new Deferred();
+		    
+		    // L'URL est stockée dans self.element.value
+		    var categoryOslcUrl = self.element.value;
 			
-			function extractJTSUrl(fullUrl) {
-			    // 1. Créer une URL object pour un parsing facile (standard dans les navigateurs modernes)
-			    var urlParser = new URL(fullUrl);
+			categoryOslcUrl= categoryOslcUrl.replace("jts", "ccm");
+		    
+		    // Ajouter le paramètre de champ pour obtenir le nom qualifié
+		    var fetchUrl = categoryOslcUrl + "?fields=foundation/contributor/name";
 
-			    // 2. Extraire l'URL de base (Protocole + Hôte + Port)
-			    // Exemple: https://jazz-server:9443
-			    var baseUrl = urlParser.protocol + '//' + urlParser.host;
+		    // Utiliser XHR.oslcXmlGetRequest pour récupérer les détails de cette ressource
+		    XHR.oslcXmlGetRequest(fetchUrl).then(
+		        function(data) {
+		            // La réponse devrait être un fragment XML contenant <qualifiedName>
+		            // Ex: <workitem><category><qualifiedName>Projet/Équipe/NomCat</qualifiedName></category></workitem>
+		            
+		            // Trouver le nœud <qualifiedName>
+		            var categoryNode = data.getElementsByTagName("contributor")[0];
+		            var qualifiedName = self.getFirstTagText(categoryNode, "name");
 
-			    // 3. Extraire les segments du chemin
-			    // pathSegments[0] sera vide car le chemin commence par '/', 
-			    // pathSegments[1] sera le premier segment (ex: 'jts' ou 'ccm')
-			    var pathSegments = urlParser.pathname.split('/');
-			    
-			    // 4. Déterminer le contexte de l'application (ex: 'jts')
-			    // Le premier segment non vide après l'hôte (généralement l'indice 1)
-			    var appContext = pathSegments[1]; 
+		            // Nous ne voulons que la partie après le dernier '/' (le nom court)
+		            var shortName = (qualifiedName || "").split("/").pop();
+		            
+		            deferred.resolve(shortName);
+		        },
+		        function(err) {
+		            console.error("Erreur chargement nom de iteration initial:", err);
+		            deferred.resolve(null); // Résoudre à null pour ne pas bloquer l'interface
+		        }
+		    );
 
-			    return baseUrl + "/" + appContext + "/";
-			}
-			
+		    return deferred.promise;
+		},
+
+		 extractJTSUrl: function(fullUrl) {
+		    // 1. Créer une URL object pour un parsing facile (standard dans les navigateurs modernes)
+		    var urlParser = new URL(fullUrl);
+
+		    // 2. Extraire l'URL de base (Protocole + Hôte + Port)
+		    // Exemple: https://jazz-server:9443
+		    var baseUrl = urlParser.protocol + '//' + urlParser.host;
+
+		    // 3. Extraire les segments du chemin
+		    // pathSegments[0] sera vide car le chemin commence par '/', 
+		    // pathSegments[1] sera le premier segment (ex: 'jts' ou 'ccm')
+		    var pathSegments = urlParser.pathname.split('/');
+		    
+		    // 4. Déterminer le contexte de l'application (ex: 'jts')
+		    // Le premier segment non vide après l'hôte (généralement l'indice 1)
+		    var appContext = pathSegments[1]; 
+
+		    return baseUrl + "/" + appContext + "/";
 		},
 		
 		getFirstTagText: function(element, tagName) {

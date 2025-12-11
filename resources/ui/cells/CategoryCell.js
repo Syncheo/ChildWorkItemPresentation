@@ -8,12 +8,13 @@ define([
     "dojo/_base/declare",
     "dijit/form/ComboBox",
     "dojo/store/Memory",
+	"dojo/Deferred",
 	"dijit/_WidgetBase",
 	"../XhrHelpers",
 	"../JazzHelpers",
 	"dojo/dom-construct",
 	"dojo/on"
-], function(declare, ComboBox, Memory, 
+], function(declare, ComboBox, Memory, Deferred,
 	_WidgetBase, 
 	XHR, JAZZ, domConstruct, on){
 
@@ -39,48 +40,48 @@ define([
 			}, tdElement);
 
 			
+			var initialValue = self.element.value || "";
+			
             // Store temporaire vide au départ
             var store = new Memory({ data: [] });
 
             // Création du ComboBox
             self.widget = new ComboBox({
-                value: self.element.value,
+                value: initialValue,
                 store: store,
                 searchAttr: "name",
                 autoComplete: false
             }, container);
 
             self.widget.startup();
+
+			if (self.element.value) {
+		        self.fetchInitialCategoryName().then(function(categoryName) {
+		            if (categoryName) {
+		                // Mettre à jour la valeur affichée du ComboBox avec le nom lisible
+		                self.widget.set("value", categoryName);
+		            }
+		        });
+		    }
 			
 			self.getValues();
+
 
 			self.own(
 			    self.widget.on("change", function(newValue) {
 					var store = self.widget.get("store");
 
-					// 🎯 Étape 2 : Chercher l'objet complet dans le store en utilisant la valeur (name)
 					var selectedItem = store.query({ name: newValue })[0]; 
-
 					var selectedId = null;
 
-					if (selectedItem && selectedItem.id) {
-						selectedId = selectedItem.id;
-					}
-
-					// Si l'utilisateur efface le champ, l'ID est null/vide
-					if (newValue === "") {
-						selectedId = ""; 
-					}
+					if (selectedItem && selectedItem.id) selectedId = selectedItem.id;
+				
+					if (newValue === "") selectedId = ""; 
 
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 					self.onChange(selectedId, self.element);
 			    })
 			);
-			
-            // Déclencher le callback onChange
-/*            on(self.widget, "change", function(val){
-                self.onChange(val, self.element);
-            });*/
         },
 		
 		getValues: function() {
@@ -119,6 +120,42 @@ define([
 		    var n = element.getElementsByTagName(tagName);
 		    return (n && n[0] && n[0].textContent) || null;
 		},
+		
+
+		fetchInitialCategoryName: function() {
+            var self = this;
+            var deferred = new Deferred();
+            
+            // L'URL est stockée dans self.element.value
+            var categoryOslcUrl = self.element.value; 
+            
+            // Ajouter le paramètre de champ pour obtenir le nom qualifié
+            var fetchUrl = categoryOslcUrl + "?fields=workitem/category/qualifiedName";
+
+            // Utiliser XHR.oslcXmlGetRequest pour récupérer les détails de cette ressource
+            XHR.oslcXmlGetRequest(fetchUrl).then(
+                function(data) {
+                    // La réponse devrait être un fragment XML contenant <qualifiedName>
+                    // Ex: <workitem><category><qualifiedName>Projet/Équipe/NomCat</qualifiedName></category></workitem>
+                    
+                    // Trouver le nœud <qualifiedName>
+                    var categoryNode = data.getElementsByTagName("category")[0];
+                    var qualifiedName = self.getFirstTagText(categoryNode, "qualifiedName");
+
+                    // Nous ne voulons que la partie après le dernier '/' (le nom court)
+                    var shortName = (qualifiedName || "").split("/").pop();
+                    
+                    deferred.resolve(shortName);
+                },
+                function(err) {
+                    console.error("Erreur chargement nom de catégorie initial:", err);
+                    deferred.resolve(null); // Résoudre à null pour ne pas bloquer l'interface
+                }
+            );
+
+            return deferred.promise;
+        },
+				
 		
 		destroy: function() {
             var self = this;

@@ -18,12 +18,13 @@ define([
 	_WidgetBase,
 	XHR, JAZZ, domConstruct, on, topic){
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.StateCell", [_WidgetBase], {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ResolutionCell", [_WidgetBase], {
 
         element: {},
 		workItemId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
+		actionId: "",
 
         constructor: function(args){
 			this.element = args.element || {};
@@ -52,7 +53,14 @@ define([
 
             self.widget.startup();
 			
-			self.getValues();
+			self.getValues("");
+
+			self.own(
+				topic.subscribe("/workitem/state/changed", function(message) {
+					console.log("ResolutionCell : Changement de action détecté. ID:", message.newActionId);		
+					self.getValues(message.newActionId); 
+				})
+			);
 
 			self.own(
 			    self.widget.on("change", function(newValue) {
@@ -75,51 +83,33 @@ define([
 						selectedId = ""; 
 					}
 
-					topic.publish("/workitem/state/changed", {
-						newActionId: selectedId,
-						element: self.element // Peut être utile pour l'identification
-					});
-					
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 			        self.onChange(selectedId, self.element);
 			    })
 			);
         },
 		
-		getValues: function() {
+		getValues: function(actionId) {
 			var self = this;
 			
 			var categoryUrl = JAZZ.getApplicationBaseUrl() +
-				"service/fr.syncheo.ewm.childitem.server.IGetStatesService" +
-				"?workItemId=" + self.workItemId.value;
+				"service/fr.syncheo.ewm.childitem.server.IGetResolutionService" +
+				"?workItemId=" + self.workItemId.value + "&actionId=" + actionId;
 				
 			XHR.oslcJsonGetRequest(categoryUrl).then(
 				function (jsonString) {
 					
 					var jsonObjet = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
-					var actionsList = jsonObjet.states
-						.map(function(stateObject) {
-							if (stateObject.action) {
-								return {
-									id: stateObject.action.id,
-									name: stateObject.action.name
-								};
-							}
-							return null;
-						})
-						.filter(function(action) {
-							return action !== null;
-						});
+					var resolutionList = jsonObjet.resolutions
+										
+					var store = new Memory({ data: resolutionList });
 					
-						
-						var newStore = new Memory({ data: actionsList });
-						self.widget.set("store", newStore);  
-					}, 
-					function(err) {
-						console.error("Erreur chargement state:", err);
-					}
-				);
-			
+					self.widget.set("store", store);  
+
+				}, function(err) {
+					console.error("Erreur chargement state:", err);
+				}
+			);
 		},
 		
 		getFirstTagText: function(element, tagName) {

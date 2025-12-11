@@ -4,8 +4,8 @@
 
     <!-- Composant serveur -->
     <extension point="com.ibm.team.repository.common.components">
-        <component id="fr.syncheo.ewm.childitem"
-                   name="Child Workitem Component">
+        <component id="fr.syncheo.ewm.childitem" 
+        	name="Child Workitem Component">
             <!-- Service REST modélisé -->
             <service kind="MODELLED_REST"
                      name="Service REST de récupération des états"
@@ -13,8 +13,8 @@
                      version="1"/>
                      
              <service kind="MODELLED_REST"
-                     name="Nouveau Service d'Outil REST"
-                     uri="fr.syncheo.ewm.childitem.server.ISaveWorkitemService" 
+                     name="Service REST de récupération des résolutions"
+                     uri="fr.syncheo.ewm.childitem.server.IGetResolutionService" 
                      version="1"/>
         </component>
     </extension>
@@ -35,9 +35,9 @@
 
     <extension point="com.ibm.team.repository.service.serviceProvider">
         <serviceProvider componentId="fr.syncheo.ewm.childitem"
-                         implementationClass="fr.syncheo.ewm.childitem.server.SaveWorkitemService">
+                         implementationClass="fr.syncheo.ewm.childitem.server.GetResolutionService">
             <provides>
-                <providedService interface="fr.syncheo.ewm.childitem.server.ISaveWorkitemService"/>
+                <providedService interface="fr.syncheo.ewm.childitem.server.IGetResolutionService"/>
             </provides>
             <prerequisites>
             	<requiredService interface="com.ibm.team.repository.service.IRepositoryItemService"/>

@@ -9,6 +9,7 @@ define([
 	"dojo/on",
 	"dojo/promise/all",
 	"dojo/query",
+	"dojo/date/locale",
 	"dojo/dom-construct",
 	"dojo/dom-style",
 	"./XhrHelpers",
@@ -19,43 +20,43 @@ define([
 	"dojo/text!./templates/Presentation.html",
 	"dojo/domReady!"
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Tooltip, 
-		Deferred, on, all, query, domConstruct, domStyle, 
+		Deferred, on, all, query, locale, domConstruct, domStyle, 
 		XHR, JAZZ, ChildRow, ChildHeader, WorkItemBatchUpdater, template) {
 
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.Presentation",
 	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 		
 		wellKnownAttributes : [
-{name: "contextId", 		rest: "contextId", 				value: "", visible: true,  editable: false, 			type: "string"},
-{name: "paContextId", 		rest: "projectArea/contextId", 	value: "", visible: true,  editable: false, 			type: "string"},
-{name: "Url", 				rest: "itemId", 				value: "", visible: true,  editable: false, 			type: "string"},
-{name: "Commentaires", 		rest: "comments/content", 		value: "", visible: false, editable: false, 			type: "array"},
-{name: "Durée", 			rest: "correctedEstimate", 		value: "", visible: false, editable: "configurable", 	type: "integer"},
-{name: "Created By", 		rest: "creator/name", 			value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Creation Date",		rest: "creationDate", 			value: "", visible: false, editable: false, 			type: "timestamp"},
-{name: "Description", 		rest: "formattedDescription", 	value: "", visible: false, editable: "configurable", 	type: "string"},
-{name: "Due Date", 			rest: "dueDate", 				value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-{name: "Estimate", 			rest: "duration", 				value: "", visible: false, editable: "configurable", 	type: "integer"},
-{name: "Filed Against", 	rest: "category/name",			value: "", visible: false, editable: "configurable", 	type: "category"},
-{name: "Found In", 			rest: "foundIn/name", 			value: "", visible: false, editable: "configurable", 	type: "deliverable"},
-{name: "Id", 				rest: "id", 					value: "", visible: true,  editable: false, 			type: "integer"},
-{name: "Modified By", 		rest: "modifiedBy/name", 		value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Modified Date", 	rest: "modified", 				value: "", visible: false, editable: false, 			type: "timestamp"},
-{name: "Owned By", 			rest: "owner/name",				value: "", visible: true,  editable: "configurable", 	type: "contributor"},
-{name: "Planned For", 		rest: "target/name", 			value: "", visible: false, editable: "configurable", 	type: "iteration"},
-{name: "Priority", 			rest: "priority/name", 			value: "", visible: false, editable: "configurable", 	type: "priority"},
-{name: "Zone de projet",	rest: "projectArea/name", 		value: "", visible: false, editable: false, 			type: "string"},
-{name: "Resolution", 		rest: "resolution", 			value: "", visible: false, editable: "configurable",	type: "resolution"},
-{name: "Resolution Date",	rest: "resolutionDate", 		value: "", visible: false, editable: "configurable", 	type: "timestamp"},
-{name: "Resolved By", 		rest: "resolver/name", 			value: "", visible: false, editable: false, 			type: "constributor"},
-{name: "Severity", 			rest: "severity/name", 			value: "", visible: false, editable: "configurable", 	type: "severity"},
-{name: "State", 			rest: "state/name",				value: "", visible: true,  editable: "configurable", 	type: "state"},
-{name: "Start Date", 		rest: "plannedStartDate", 		value: "", visible: false, editable: "configurable",	type: "timestamp"},
-{name: "Subscribed By", 	rest: "subscriptions/name", 	value: "", visible: false, editable: false, 			type: "contributor"},
-{name: "Summary", 			rest: "summary", 				value: "", visible: true,  editable: "configurable", 	type: "string"},
-{name: "Tags", 				rest: "tags", 					value: "", visible: false, editable: "configurable", 	type: "pipearray"},
-{name: "Time Spent", 		rest: "timeSpent", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
-{name: "Type", 				rest: "type/name", 				value: "", visible: true,  editable: false, 			type: "string"}
+{name: "contextId", 		rest: "contextId", 												visible: true,  editable: false, 		type: "string"},
+{name: "paContextId", 		rest: "projectArea/contextId", 									visible: true,  editable: false, 		type: "string"},
+{name: "Url", 				rest: "itemId", 												visible: true,  editable: false, 		type: "string"},
+{name: "Commentaires", 		rest: "comments/(creationDate|creator/name|formattedContent)", 	visible: false, editable: false, 		type: "string"},
+{name: "Durée", 			rest: "correctedEstimate", 										visible: false, editable: "configurable",type: "duration"},
+{name: "Created By", 		rest: "creator/name", 											visible: false, editable: false, 		type: "contributor"},
+{name: "Creation Date",		rest: "creationDate", 											visible: false, editable: false, 		type: "timestamp"},
+{name: "Description", 		rest: "formattedDescription", 									visible: false, editable: false,		type: "string"},
+{name: "Due Date", 			rest: "dueDate", 												visible: false, editable: "configurable",type: "timestamp"},
+{name: "Estimate", 			rest: "duration", 												visible: false, editable: "configurable",type: "duration"},
+{name: "Filed Against", 	rest: "category/(name|reportableUrl)",							visible: false, editable: "configurable",type: "category"},
+{name: "Found In", 			rest: "foundIn/name", 											visible: false, editable: "configurable",type: "deliverable"},
+{name: "Id", 				rest: "id", 													visible: true,  editable: false, 		type: "integer"},
+{name: "Modified By", 		rest: "modifiedBy/name",				 						visible: false, editable: false, 		type: "contributor"},
+{name: "Modified Date", 	rest: "modified", 												visible: false, editable: false, 		type: "timestamp"},
+{name: "Owned By", 			rest: "owner/(name|reportableUrl)",								visible: true,  editable: "configurable",type: "contributor"},
+{name: "Planned For", 		rest: "target/(name|reportableUrl)", 							visible: false, editable: "configurable",type: "iteration"},
+{name: "Priority", 			rest: "priority/name", 											visible: false, editable: "configurable",type: "priority"},
+{name: "Zone de projet",	rest: "projectArea/name", 										visible: false, editable: false, 		type: "string"},
+{name: "Resolution", 		rest: "resolution/name", 										visible: false, editable: "configurable",type: "resolution"},
+{name: "Resolution Date",	rest: "resolutionDate", 										visible: false, editable: false, 		type: "timestamp"},
+{name: "Resolved By", 		rest: "resolver/name", 											visible: false, editable: false, 		type: "constributor"},
+{name: "Severity", 			rest: "severity/name", 											visible: false, editable: "configurable",type: "severity"},
+{name: "State", 			rest: "state/name",												visible: true,  editable: "configurable",type: "state"},
+{name: "Start Date", 		rest: "plannedStartDate", 										visible: false, editable: false,			type: "timestamp"},
+{name: "Subscribed By", 	rest: "subscriptions/name", 									visible: false, editable: false, 		type: "contributor"},
+{name: "Summary", 			rest: "summary", 												visible: true,  editable: "configurable",type: "string"},
+{name: "Tags", 				rest: "tags", 													visible: false, editable: "configurable",type: "pipearray"},
+{name: "Time Spent", 		rest: "timeSpent", 												visible: false, editable: "configurable",type: "duration"},
+{name: "Type", 				rest: "type/name", 												visible: true,  editable: false, 		type: "string"}
 		],
 					
 		//https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=11]/stateTransitions/(targetStateId|sourceProjectArea/states/*)
@@ -197,13 +198,36 @@ define([
 								childAttributes.type = enumerations ? enumerations.type : childAttributes.type;
 								childAttributes.values = enumerations ? enumerations.values : [];
 							}
+						} else if (childAttributes.rest.includes("comments")) {
+							childAttributes.value = formatLatestCommentToHtml(c);
+						} else if (childAttributes.rest.includes("subscriptions")) {
+							childAttributes.value = getArrayOfAttributes(c, "subscriptions", "name");
+						} else if (childAttributes.type === "category") {
+							if (childAttributes.editable) {
+								childAttributes.value = self.getValueByTag1andTag2(c, "category", "reportableUrl");
+							} else {
+								childAttributes.value = self.getValueByTag1andTag2(c, "category", "name");
+							}
+						} else if (childAttributes.type === "constributor") {
+							if (childAttributes.editable) {
+								childAttributes.value = self.getValueByTag1andTag2(c, "constributor", "reportableUrl");
+							} else {
+								childAttributes.value = self.getValueByTag1andTag2(c, "constributor", "name");
+							}
+						} else if (childAttributes.type === "iteration") {
+							if (childAttributes.editable) {
+								childAttributes.value = self.getValueByTag1andTag2(c, "iteration", "reportableUrl");
+							} else {
+								childAttributes.value = self.getValueByTag1andTag2(c, "iteration", "name");
+							}
 						} else if (childAttributes.rest.includes("/")) {
 							childAttributes.value = self.getValueByNameAttribute(c, childAttributes.rest)
 						} else {
 							var elemt = c.getElementsByTagName(childAttributes.rest)[0].textContent
-							if (childAttributes.rest === "itemId") elemt = JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
-							childAttributes.value = elemt
-
+							if (childAttributes.rest === "itemId") childAttributes.value =  JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
+							else if (childAttributes.rest === "tags") childAttributes.value =  self.formatPipeString(elemt);
+							else if (childAttributes.type === "duration") childAttributes.value = self.convertMillisecondsToWorkDays(elemt);
+							else if (childAttributes.type === "timespent") childAttributes.value = self.formatIsoDateForCustomStyle(elemt);					
 						}
 						child.push(childAttributes);
 					}		
@@ -315,6 +339,34 @@ define([
 		
 		},
 		
+		
+		formatIsoDateForCustomStyle: function(dateString) {
+		    
+			if (!dateString) return "";
+
+		    // 1. Créer l'objet Date
+		    var dateObj = new Date(dateString);
+
+		    if (isNaN(dateObj.getTime())) {
+		        return dateString;
+		    }
+
+		    var customDatePattern = "dd MMM yyyy"; 
+		    var customTimePattern = "HH:mm:ss"; 
+		    var formattedDate = locale.format(dateObj, {
+		        datePattern: customDatePattern,
+		        selector: "date"
+		    });
+		    
+		    var formattedTime = locale.format(dateObj, {
+		        timePattern: customTimePattern,
+		        selector: "time"
+		    });
+		    return formattedDate + " " + formattedTime;
+		},
+		
+		
+		
 		normalizeFieldValues: function(data) {
 			
 			var names = data[0].map(function(n) { return n.name; })
@@ -357,9 +409,6 @@ define([
 			    }
 			}
 		},
-		
-
-		
 		
 		getCustomAttributesBykey: function(workItem, key) {
 
@@ -412,6 +461,25 @@ define([
 			};
 
 		},
+		
+		convertMillisecondsToWorkDays: function(milliseconds) {
+		    // 28 800 000 est le nombre de millisecondes dans 8 heures
+		    var MS_PER_WORK_DAY = 28800000;
+		    
+		    if (typeof milliseconds !== 'number' || isNaN(milliseconds) || milliseconds < 0) {
+		        // Gérer les autres cas invalides si nécessaire (si vous ne voulez pas de durées négatives non -1)
+		        return ""; 
+		    }
+
+		    // 1. Calcul du résultat exact
+		    var days = milliseconds / MS_PER_WORK_DAY;
+
+		    // 2. Arrondir à deux décimales (méthode Math.round(x * 100) / 100)
+		    var roundedDays = Math.round(days * 100) / 100;
+
+			return roundedDays + " d";
+
+		},
 
 		getValueByNameAttribute: function(c, rest) {
 			if (!rest || typeof rest !== "string") return "";
@@ -422,6 +490,22 @@ define([
 
 			var tag1 = parts[0];
 			var tag2 = parts[1];
+			if (!c || typeof c.getElementsByTagName !== "function") return "";
+			
+			var elems1 = c.getElementsByTagName(tag1);
+			if (!elems1 || elems1.length === 0) return "";
+
+			var elems2 = elems1[0].getElementsByTagName(tag2);
+			if (!elems2 || elems2.length === 0) return "";
+			
+			var text = elems2[0].textContent;
+			return (typeof text === "string" ? text : "");												
+		},
+		
+		getValueByTag1andTag2: function(c, tag1, tag2) {
+			if (!tag1 || typeof tag1 !== "string") return "";
+			if (!tag2 || typeof tag2 !== "string") return "";
+			
 			if (!c || typeof c.getElementsByTagName !== "function") return "";
 			
 			var elems1 = c.getElementsByTagName(tag1);
@@ -456,6 +540,73 @@ define([
 
 		    return { value: "", type: "", key: "" };
 		},
+		
+		
+		/**
+		 * Extrait le texte du premier sous-élément trouvé. (Fonction helper basée sur votre code)
+		 * @param {Element} element L'élément parent.
+		 * @param {string} tagName Le nom de la balise enfant à chercher.
+		 * @returns {string | null} Le contenu textuel ou null.
+		 */
+
+		getArrayOfAttributes: function(xmlDoc, node, item) {
+			var nodes = Array.from(xmlDoc.getElementsByTagName(node) || []);
+			if (nodes.length === 0) {
+				return "";
+			}
+			
+			var items = nodes.map(function(nodeElmt) {
+				return getFirstTagText(nodeElmt, item);
+			});
+			return items.join(", ");
+		},
+				
+
+		getLatestCommentDetails: function(xmlDoc) {
+		    // 1. Récupérer tous les nœuds <comments>
+		    var commentsNodes = Array.from(xmlDoc.getElementsByTagName("comments") || []);
+			
+			if (commentsNodes.length === 0) {
+				return { creatorName: "N/A", content: "Aucun commentaire", date: new Date(0) };
+			}
+			
+			var comments = commentsNodes.map(function(commentNode) {
+				var dateString = getFirstTagText(commentNode, "creationDate");
+				return {
+					date: new Date(dateString),
+					creatorName: getFirstTagText(commentNode.getElementsByTagName("creator")[0], "name"),
+					content: getFirstTagText(commentNode, "formattedContent")
+				};
+			});
+
+			comments.sort(function(a, b) {
+				return b.date.getTime() - a.date.getTime();
+			});
+			
+			return comments[0];
+
+		},
+		
+		formatLatestCommentToHtml: function(xmlDoc) {
+		    var latestComment = getLatestCommentDetails(xmlDoc);
+
+		    if (!latestComment.creatorName || latestComment.creatorName === "N/A") {
+		        return "<div>Aucun commentaire trouvé.</div>";
+		    }
+		    
+		    // Mise en forme de la date au format local (Ex: 10/12/2025 14:09)
+		    var dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+		    var formattedDate = latestComment.date.toLocaleDateString('fr-FR', dateOptions);
+
+		    // Construction de la chaîne HTML sur trois lignes
+		    var htmlString = 
+		        "<div>Créateur : <b>" + latestComment.creatorName + "</b></div>" + // Ligne 1 : Créateur en gras
+		        "<div>Date : " + formattedDate + "</div>" +                         // Ligne 2 : Date
+		        "<div>Contenu : " + latestComment.content + "</div>";                // Ligne 3 : Contenu formaté
+
+		    return htmlString;
+		},
+		
 		
 		getFirstTagText: function(element, tagName) {
 		    if (!element) return null;
@@ -498,6 +649,13 @@ define([
 			}
 			
 		    return rex.join("|");
+		},
+		
+		formatPipeString: function(tags) {
+			var parts = tags.split('|');
+			var filteredTags = parts.filter(Boolean);
+
+			return filteredTags.join(', ');
 		},
 		
 		getCustomAttributDisplayValue: function(workItem, targetDisplayName) {
