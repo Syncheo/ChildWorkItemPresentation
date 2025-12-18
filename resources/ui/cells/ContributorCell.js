@@ -21,14 +21,22 @@ define([
 		[_WidgetBase], 
 	{
 		_elementData: null,      // Les données de l'attribut de l'élément enfant
-		_cellContextId: "",      // L'ID de la zone de projet/équipe pour les requêtes
+		contextId: "",      // L'ID de la zone de projet/équipe pour les requêtes
         onChange: null, // Le callback à appeler lors du changement de valeur
 		widget: null,
 
-
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
 		constructor: function (args) {
             this._elementData = args.element || {};
-			this._cellContextId = args.contextId || {} ; // contextId est un objet {value: ...}
+			this.contextId = args.contextId || {} ; // contextId est un objet {value: ...}
             this.onChange = args.onChange || function(){};
         },
 
@@ -61,7 +69,7 @@ define([
 			    self.fetchInitialContributorName().then(function(contributorName) {
 			        if (contributorName) {
 			            // Mettre à jour la valeur affichée du ComboBox avec le nom lisible
-			            self.widget.set("value", contributorName);
+			            self.widget.set("value", contributorName, false);
 			        }
 			    });
 			}
@@ -84,6 +92,7 @@ define([
 						selectedId = ""; 
 					}
 
+					self.element.datatype = "resource";	
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 					self.onChange(selectedId, self.element);
 			    })
@@ -94,8 +103,8 @@ define([
 			var self = this;
 			
 			var contributorUrl = JAZZ.getApplicationBaseUrl() + "rpt/repository/foundation?fields=foundation/(" + 
-				"projectArea[itemId=" + self._cellContextId.value + "]/teamMembers/(reportableUrl|userId|name)|" + 
-				"teamArea[itemId="+ self._cellContextId.value + "]/teamMembers/(reportableUrl|userId|name))";
+				"projectArea[itemId=" + self.contextId.value + "]/teamMembers/(reportableUrl|userId|name)|" + 
+				"teamArea[itemId="+ self.contextId.value + "]/teamMembers/(reportableUrl|userId|name))";
 				
 			XHR.oslcXmlGetRequest(contributorUrl).then(
 				function (data) {
@@ -118,7 +127,7 @@ define([
 					    var nodes = Array.from(ta.getElementsByTagName("teamMembers") || []);
 					    nodes.forEach(function(tm) {
 					        acc.push({
-								id: extractJTSUrl(self.getFirstTagText(tm, "reportableUrl")) + "users/" +  self.getFirstTagText(tm, "userId"),
+								id: self.extractJTSUrl(self.getFirstTagText(tm, "reportableUrl")) + "users/" +  self.getFirstTagText(tm, "userId"),
 					            name: self.getFirstTagText(tm, "name")
 					        });
 					    });
@@ -136,7 +145,7 @@ define([
 			);	
 		},
 		
-		fetchInitialIterationName: function() {
+		fetchInitialContributorName: function() {
 		    var self = this;
 		    var deferred = new Deferred();
 		    

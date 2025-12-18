@@ -71,6 +71,8 @@ define([
 						selectedId = ""; 
 					}
 
+					self.element.datatype = "resource";					
+
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 					self.onChange(selectedId, self.element);
 			    })

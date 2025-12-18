@@ -25,6 +25,17 @@ define([
         onChange: null,  // callback lors du changement
 		widget: null,
 
+		
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
         constructor: function(args){
             this.element = args.element || {};
 			this.paContextId = args.paContextId || {}
@@ -56,8 +67,10 @@ define([
 			if (self.element.value) {
 		        self.fetchInitialIterationName().then(function(iterationName) {
 		            if (iterationName) {
-		                // Mettre à jour la valeur affichée du ComboBox avec le nom lisible
-		                self.widget.set("value", iterationName);
+						self.element.datatype = "resource";					
+
+						// Mettre à jour la valeur affichée du ComboBox avec le nom lisible
+		                self.widget.set("value", iterationName, false);
 		            }
 		        });
 		    }

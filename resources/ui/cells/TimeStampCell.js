@@ -27,44 +27,69 @@ define([
             this.element = args.element || {};
             this.onChange = args.onChange || function(){};
         },
-
-        render: function(tdElement){
-            var self = this;
-			var customDatePattern = "dd MMM yyyy"; 
-			var customTimePattern = "HH:mm:ss"; 
+		
+		
+		render: function(tdElement){
 			
-			var dateObj;
+			var self = this;
 			
-			try {
-			    dateObj = locale.parse(self.element.value, {
-			        datePattern: customDatePattern,
-			        timePattern: customTimePattern,
-			        selector: "datetime" // Indique à Dojo de lire les deux parties
-			    });
-			} catch(e) {
-			    console.error("Erreur de parsing de la date formatée :", self.element.value, e);
-			    dateObj = null; 
+			var initialValue = self.element.value;
+			var dateObj = null;
+		            
+			// --- Définition des formats ---
+			// Le format Dojo/Dijit pour l'affichage (locale.format)					
+			// 1. Conversion de la chaîne ISO en objet Date JavaScript
+			if (typeof initialValue === 'string' && initialValue) {
+				// Utilisation du constructeur natif JS pour l'ISO 8601 (gestion heure/timezone)
+				var parsedDate = new Date(initialValue); 
+		                
+                if (!isNaN(parsedDate.getTime())) {
+					dateObj = parsedDate;
+                }
+			} else if (initialValue instanceof Date) {
+				dateObj = initialValue; 
 			}
-							    
-
+			
 			var container = domConstruct.create("div", {
-			    style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
+				style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
 			}, tdElement);
 
-			// 2. Créer l'instance du DateTextBox
-			self.widget = new DateTextBox({
+			// 2. Créer l'instance du DateTimeTextBox
+			self.widget = new DateTextBox({ // <<< CHANGÉ
 				value: dateObj,
-				onChange: function(newDateValue) {
-					console.log("Nouvelle Date sélectionnée (objet Date JS) :", newDateValue);
-					var simpleIsoDate = newDateValue.toISOString().substring(0, 10);
-					console.log("Format pour sauvegarde (YYYY-MM-DD) :", simpleIsoDate);
+				constraints: {
+                    // dd : Jour (01-31)
+                    // MMM : Mois abrégé localisé (déc., janv., etc.)
+                    // yyyy : Année à quatre chiffres
+                    datePattern: "dd MMM yyyy", 
+                    
+                    // Indiquer que le format d'entrée (parse) attend la date
+                    selector: "date" 
+                    
+                    // Si vous utilisez DateTimeTextBox et voulez masquer l'heure:
+                    // timePattern: "" 
 				}
 			}, container);
-			.6
-            self.widget.startup();
-	
-        },
-		
+			
+			self.widget.startup();
+			
+			// 3. Gestion du changement
+			self.own(
+				self.widget.on("change", function(newDateValue) {
+					if (newDateValue instanceof Date && !isNaN(newDateValue.getTime())) {
+						// Retourner la chaîne ISO 8601 complète (avec date et heure)
+						var isoString = newDateValue.toISOString();    
+						self.element.datatype = "http://www.w3.org/2001/XMLSchema#dateTime";
+						self.onChange(isoString, self.element);
+		                        
+					} else if (newDateValue === null || newDateValue === undefined || newDateValue === "") {
+					    // Gérer le cas où l'utilisateur efface la date
+					    self.onChange(null, self.element); 
+					}
+				})
+			);
+		},
+
 		destroy: function() {
             var self = this;
             if (self.widget && typeof self.widget.destroy === 'function') {

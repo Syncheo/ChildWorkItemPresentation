@@ -12,41 +12,28 @@ define([
     "dojo/on",
     "dojo/dom-construct",
     "dojo/text!./templates/ChildRow.html",
-	"./cells/StandardCell",
 	"./cells/LinkCell",
 	"./cells/EditableTextCell",
-	"./cells/ComboBoxCell",
-	"./cells/CategoryCell",
-	"./cells/ContributorCell",
-	"./cells/DeliverableCell",
-	"./cells/StateCell",
-	"./cells/IterationCell",
-	"./cells/PriorityCell",
-	"./cells/ResolutionCell",
-	"./cells/SeverityCell",
-	"./cells/TimeStampCell",
-	"./cells/DurationCell",
+	"./CellWidgetFactory"
 ], function (
     declare, lang, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
     Tooltip, on, domConstruct, template, 
-	StandardCell,  LinkCell, EditableTextCell, 
-	ComboBoxCell, CategoryCell, ContributorCell, DeliverableCell, StateCell,
-	IterationCell, ResolutionCell, SeverityCell, TimeStampCell, DurationCell) {
+	LinkCell, EditableTextCell, CellWidgetFactory) {
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.ChildRow", 
 		[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 			
 			
-			templateString: template,
-			childData: null,
-			changed: null,
-			url: null,
-			allCells: null,
-			onChange: null,
-			
-			constructor: function (args) {
-				this.childData = args.childData || {};
-				this.onChange = args.onChange || function(){};
-			},
+		templateString: template,
+		childData: null,
+		changed: null,
+		url: null,
+		allCells: null,
+		onChange: null,
+		
+		constructor: function (args) {
+			this.childData = args.childData || {};
+			this.onChange = args.onChange || function(){};
+		},
 			
 	
 			postCreate: function () {
@@ -62,25 +49,58 @@ define([
 				var type = self.childData.filter(function(elmt) { return elmt.name === "Type"	})[0];
 				var summary = self.childData.filter(function(elmt) { return elmt.name === "Summary" })[0];
 				var paContextId = self.childData.filter(function(elmt) { return elmt.name === "paContextId"	})[0];
-				var contextId = self.childData.filter(function(elmt) { return elmt.name === "contextId" })[0];
 					
 				self.url = self.childData.filter(function(elmt) { return elmt.name === "Url" })[0];
 				self.contextId = self.childData.filter(function(elmt) { return elmt.name === "contextId" })[0];
 
+				var contextIds = {
+				    paContextId: paContextId, // supposons que paContextId est défini dans cette portée
+				    contextId: self.contextId,     // supposons que contextId est défini
+				    id: id                    // supposons que id est défini (pour resolution/state)
+				};
+				
 				
 				var td = domConstruct.create("td", {}, self.childRow);
-				var cellId = new LinkCell(type.value + " " + id.value, self.url.value); // si tu veux un lien
+				var linkElement = {
+					editable: false,
+					type: "link",
+					value: type.value + " " + id.value,
+					url: self.url.value
+				}
+				
+				this.cellFactory = new CellWidgetFactory();
+				
+				var cellId = this.cellFactory.createCell(
+				    linkElement, 
+				    contextIds, 
+				    self.callback.bind(self)
+				);
+				
 				cellId.render(td);
 				
 				self.allCells.push(cellId);
 				
 				// Cellule Summary
 				var td2 = domConstruct.create("td", {}, self.childRow);
-				if( summary.editable) {
-					var cellSummary = new EditableTextCell(summary.value, self.callback.bind(self));					
-				} else {
-					var cellSummary = new LinkCell(summary.value, this.url.value); // si tu veux un lien
+				
+				var summaryElement = {
+					editable: summary.editable,
+					type: "link",
+					name: "Summary",
+					oslckey: "dcterms:title",
+					datatype: "Literal",
+					value: summary.value,
+					url: self.url.value
 				}
+				
+				this.cellFactory = new CellWidgetFactory();
+
+				var cellSummary = this.cellFactory.createCell(
+					summaryElement,
+					contextIds,
+					self.callback.bind(self)
+				);
+				
 				cellSummary.render(td2);
 
 				self.allCells.push(cellSummary);
@@ -90,86 +110,20 @@ define([
 					var childElemt = self.childData[i];
 
 					if (["Type","Id","Summary","Url","contextId","paContextId"].includes(childElemt.name)) continue;
-
-
+					
 					var td = domConstruct.create("td", {}, this.childRow);
+					
+					this.cellFactory = new CellWidgetFactory();
 	
-					if (!childElemt.editable) {
-						var cell = new StandardCell(childElemt.value);
-					} else {
-						if (childElemt.type === "string" ) {
-							var cell = new EditableTextCell({
-								element: childElemt, 
-								onChange: self.callback.bind(self)
-							});						
-						} else if (childElemt.type === "category" ) {
-							var cell = new CategoryCell({
-								element: childElemt, 
-								paContextId: paContextId, 
-								onChange: self.callback.bind(self)
-							});						
-						} else if (childElemt.type === "contributor" ) {
-							var cell = new ContributorCell({
-								element: childElemt, 
-								contextId: contextId, 
-								onChange: self.callback.bind(self)
-							});
-						} else if (childElemt.type === "iteration" ) {
-							var cell = new IterationCell({
-								element: childElemt, 
-								contextId: contextId, 
-								onChange: self.callback.bind(self)
-							});
-						} else if (childElemt.type === "deliverable" ) {
-							var cell = new DeliverableCell({
-								element: childElemt, 
-								paContextId: paContextId, 
-								onChange: self.callback.bind(self)
-							});	
-						} else if (childElemt.type === "priority" ) {
-							var cell = new PriorityCell({
-								element: childElemt, 
-								paContextId: paContextId, 
-								onChange: self.callback.bind(self)
-							});
-						} else if (childElemt.type === "severity" ) {
-							var cell = new SeverityCell({
-								element: childElemt, 
-								paContextId: paContextId, 
-								onChange: self.callback.bind(self)
-							});
-						} else if (childElemt.type === "resolution" ) {
-							var cell = new ResolutionCell({
-								element: childElemt, 
-								paContextId: id, 
-								onChange: self.callback.bind(self)
-							});					
-						} else if (childElemt.type === "enumeration" ) {
-							var cell = new ComboBoxCell({
-								element: childElemt,  
-								onChange: self.callback.bind(self)
-							});				
-						} else if (childElemt.type === "duration" ) {
-							var cell = new DurationCell({
-								element: childElemt,  
-								onChange: self.callback.bind(self)
-							});	
-						} else if (childElemt.type === "timestamp" ) {
-							var cell = new TimeStampCell({
-								element: childElemt,  
-								onChange: self.callback.bind(self)
-							});	
-						} else if (childElemt.type === "state" ) {
-							var cell = new StateCell({
-								element: childElemt, 
-								workItemId: id,
-								onChange: self.callback.bind(self)
-							});						
-						} else {
-							console.log(childElemt);
-						}
-					}
+					var cell = this.cellFactory.createCell(
+					    childElemt,
+					    contextIds, 
+					    self.callback.bind(self)
+					);
+
+					// Rendre la cellule (la logique de rendu reste la même)
 					cell.render(td);
+					
 					self.allCells.push(cell);
 				}
 			},
@@ -198,120 +152,27 @@ define([
 			},
 			
 			
-			callback: function(newValue, element) {
-				var self = this;
-				var objectUrl = self.url.value;
-				var fieldName = element.name || "childElemt.name";
-				if (self.changed[objectUrl] === undefined) self.changed[objectUrl] = {};
-				self.changed[objectUrl][fieldName] = newValue;
-				console.log("Champ modifié :", objectUrl, ": " , fieldName, "->", newValue);
-				self.onChange(self.changed);
-			},
-			
-			startup: function () {
-			    this.inherited(arguments);
+		callback: function(newValue, element) {
+			var self = this;
+			var objectUrl = self.url.value;
+			var fieldName = element.oslckey || element.name  || "Unknown";
+			if (!self.changed[objectUrl]) {
+			    self.changed[objectUrl] = {};
 			}
+
+			// 2. Utiliser l'oslckey comme CLÉ au lieu de faire un push dans un tableau
+			// Cela écrase automatiquement l'ancienne valeur si le même champ est rechangé
+			self.changed[objectUrl][element.oslckey] = {
+			    value: newValue,
+			    oslckey: element.oslckey,
+			    datatype: element.datatype
+			};
+			console.log("Champ modifié :", objectUrl, ": " , fieldName, "->", newValue);
+			self.onChange(self.changed);
+		},
 			
-
-			
-            // --- Summary ---
-   
-
-/*            // ========== AUTRES COLONNES ==========
-            for (var i = 0; i < this.headers.length; i++) {
-                var h = this.headers[i];
-                if (h === "Type" || h === "Id" || h === "Summary") continue;
->>>>>>> Stashed changes
-
-                var td = domConstruct.create("td", {}, this.childRow);
-                var value = this.childData[h];
-                var type = this.getFieldType(h);
-
-                // NON EDITABLE
-                if (!this.editable.includes(h)) {
-                    td.innerHTML = value || "";
-                    continue;
-                }
-
-                // --- CONTENEUR POUR LE WIDGET ---
-                var container = domConstruct.create("div", {
-                    style: "width:100%;"
-                }, td);
-
-                var widget = null;
-
-                // ========== ENUM ==========
-                if (type === "enum") {
-                    widget = new Select({
-                        value: value,
-                        options: this.getEnumValues(h)
-                    }, container);
-                    widget.startup();
-                }
-
-                // ========== DATE ==========
-                else if (type === "date") {
-                    widget = new DateTextBox({
-                        value: value ? new Date(value) : null
-                    }, container);
-                    widget.startup();
-                }
-
-                // ========== TEXTE ==========
-                else {
-                    widget = new TextBox({
-                        value: value
-                    }, container);
-                    widget.startup();
-                }
-
-                // Largeur 100%
-                widget.domNode.style.width = "100%";
-                if (widget.focusNode) {
-                    widget.focusNode.style.width = "100%";
-                    widget.focusNode.style.boxSizing = "border-box";
-                }
-
-                // Empêche IBM de détecter les changements
-  //              this._blockIBMEvents(widget.focusNode || widget.domNode);
-
-                // Ton PROPRE mécanisme de sauvegarde
-/*                (function (field, wgt) {
-
-                    // Enter = commit
-                    on(wgt.domNode, "keydown", function (evt) {
-                        if (evt.keyCode === 13) {
-                            var val = wgt.get("value");
-                            self.childData[field] = val;
-                            self.emitCustomSaveEvent(field, val);
-                            evt.stopPropagation();
-                            evt.preventDefault();
-                        }
-                    });
-
-                    // Blur = commit (optionnel)
-                    on(wgt.domNode, "blur", function () {
-                        var val = wgt.get("value");
-                        self.childData[field] = val;
-                        self.emitCustomSaveEvent(field, val);
-                    });
-
-                })(h, widget);
-            }
-        },*/
-
-
-
-/*        emitCustomSaveEvent: function (field, value) {
-            var event = new CustomEvent("mySaveEvent", {
-                detail: {
-                    field: field,
-                    value: value,
-                    workItem: this.childData
-                }
-            });
-            document.dispatchEvent(event);
-        },*/
-
+		startup: function () {
+		    this.inherited(arguments);
+		}
     });
 });

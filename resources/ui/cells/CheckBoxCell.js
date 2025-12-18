@@ -1,0 +1,78 @@
+/**
+ * CheckBoxCell.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
+define([
+    "dojo/_base/declare",
+    "dijit/form/CheckBox",
+	"dijit/_WidgetBase",
+	"dojo/dom-construct",
+	"dojo/on"
+], function(declare, CheckBox, _WidgetBase, domConstruct, on){
+
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CheckBoxCell", 
+		[_WidgetBase], {
+
+        element: {},
+		paContextId: "",
+        onChange: null,  // callback lors du changement
+		widget: null,
+		
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
+        constructor: function(args){
+            this.element = args.element || {};
+			this.paContextId = args.paContextId || {}
+            this.onChange = args.onChange || function(){};
+        },
+
+        render: function(tdElement){
+            var self = this;
+
+			var container = domConstruct.create("div", {
+			    style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
+			}, tdElement);
+
+		
+            // Création du ComboBox
+            self.widget = new CheckBox({
+				name: "checkBox",
+                value: "true",
+                checked: !!self.element.value
+            }, container);
+			
+			self.widget.startup();
+			
+			self.own(
+			    self.widget.on("change", function(isChecked) {
+					self.element.datatype = "http://www.w3.org/2001/XMLSchema#boolean";					
+
+					self.onChange(isChecked, self.element); 
+			    })
+			);
+			
+        },
+		
+		destroy: function() {
+            var self = this;
+            if (self.widget && typeof self.widget.destroy === 'function') {
+                self.widget.destroy();
+            }
+			self.inherited(arguments);
+
+            // Note: Comme CategoryCell n'hérite de rien, inherited(arguments) n'est pas nécessaire.
+        }
+				
+    });
+
+});

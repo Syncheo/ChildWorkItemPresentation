@@ -14,8 +14,7 @@ define([
 	"dojo/dom-construct",
 	"dojo/on"
 ], function(declare, ComboBox, Memory, 
-	_WidgetBase, 
-	XHR, JAZZ, domConstruct, on){
+	_WidgetBase, XHR, JAZZ, domConstruct, on){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.SeverityCell", 
 		[_WidgetBase], {
@@ -24,6 +23,17 @@ define([
 		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
+		
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
 		
         constructor: function(args){
             this.element = args.element || {};

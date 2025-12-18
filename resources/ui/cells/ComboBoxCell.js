@@ -20,6 +20,16 @@ define([
         onChange: null,    // callback quand la valeur change
 		widget: null,
 
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
         constructor: function(args){
             this.element = args.element || {};
             this.options = this.element.values || [];
@@ -51,7 +61,8 @@ define([
 			self.own(
 			    self.widget.on("change", function(newValue) {
 			        // Votre logique de gestion du changement ici
-			        self.onChange(newValue, self.element);
+					self.element.datatype = "resource";
+					self.onChange(newValue, self.element);
 			    })
 			);
 			

@@ -22,13 +22,26 @@ define([
 
         element: {},
 		workItemId: "",
+		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
 		actionId: "",
 
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
+		
         constructor: function(args){
 			this.element = args.element || {};
-			this.workItemId = args.workItemId || {}
+			this.workItemId = args.workItemId || {};
+			this.paContextId = args.paContextId || {};
 			this.onChange = args.onChange || function(){};
         },
 
@@ -100,8 +113,16 @@ define([
 				function (jsonString) {
 					
 					var jsonObjet = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
-					var resolutionList = jsonObjet.resolutions
-										
+					var resolutionList = jsonObjet.resolutions.map(function (item) {
+						return {
+							id: JAZZ.getApplicationBaseUrl() +  "oslc/workflows/" + self.paContextId.value + "/resolutions/" + item.id,
+							name: item.name
+
+						}
+					})
+					//<rtc_cm:resolution rdf:resource="https://jazz-server:9443/ccm/oslc/workflows/_pG5nILDqEfC38tEFCAkmbQ/resolutions/com.ibm.team.workitem.defectWorkflow/3"/>
+			
+						
 					var store = new Memory({ data: resolutionList });
 					
 					self.widget.set("store", store);  

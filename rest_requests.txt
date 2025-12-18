@@ -1,0 +1,324 @@
+
+
+{name: "Durée", 			rest: "correctedEstimate", 		value: "", visible: false, editable: "configurable", 	type: "duration"},
+{name: "Estimate", 			rest: "duration", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
+{name: "Time Spent", 		rest: "timeSpent", 				value: "", visible: false, editable: "configurable", 	type: "duration"},
+
+
+
+
+
+Done Edit
+{name: "Resolution", 		rest: "resolution", 			value: "", visible: false, editable: "configurable",	type: "resolution"},
+{name: "Priority", 			rest: "priority/name", 			value: "", visible: false, editable: "configurable", 	type: "priority"},
+{name: "Severity", 			rest: "severity/name", 			value: "", visible: false, editable: "configurable", 	type: "severity"},
+{name: "Tags", 				rest: "tags", 					value: "", visible: false, editable: "configurable", 	type: "pipearray"},
+{name: "Planned For", 		rest: "target/name", 			value: "", visible: false, editable: "configurable", 	type: "iteration"},
+{name: "Filed Against", 	rest: "category/name",			value: "", visible: false, editable: "configurable", 	type: "category"},
+{name: "Found In", 			rest: "foundIn/name", 			value: "", visible: false, editable: "configurable", 	type: "deliverable"},
+{name: "Owned By", 			rest: "owner/name",				value: "", visible: true,  editable: "configurable", 	type: "contributor"},
+{name: "State", 			rest: "state/name",				value: "", visible: true,  editable: "configurable", 	type: "state"},
+{name: "Summary", 			rest: "summary", 				value: "", visible: true,  editable: "configurable", 	type: "string"},
+
+
+[
+	{action: "actionID1", resolution: [{id: resolutionId1.1 , name: "resolutionName1.1"}, {id: resolutionId1.2 , name: "resolutionName1.2"} ]},
+	{action: "actionID2", resolution: [{id: resolutionId2.1 , name: "resolutionName2.1"}, {id: resolutionId2.2 , name: "resolutionName2.2"} ]},
+	{action: "actionID3", resolution: [{id: resolutionId3.1 , name: "resolutionName3.1"}, {id: resolutionId3.2 , name: "resolutionName3.2"} ]}
+]
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[key=MonEnumList]/*/*|*/*)
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/comments/*/*
+
+
+    <rtc_cm:timeSpent rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">21600000</rtc_cm:timeSpent>
+    <rtc_cm:estimate rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3600000</rtc_cm:estimate>
+    <rtc_cm:correctedEstimate rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">28800000</rtc_cm:correctedEstimate>
+
+
+
+
+  <rdf:Description rdf:nodeID="A0">
+    <rdf:subject rdf:resource="https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_9vUXsLohEfCoBvH4zpHzlA"/>
+    <rdf:predicate rdf:resource="http://jazz.net/xmlns/prod/jazz/rtc/cm/1.0/com.ibm.team.workitem.linktype.parentworkitem.parent"/>
+    <rdf:object rdf:resource="https://jazz-server:9443/ccm/resource/itemName/com.ibm.team.workitem.WorkItem/7"/>
+    <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement"/>
+    <dcterms:title>7 : Test</dcterms:title>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_9vUXsLohEfCoBvH4zpHzlA">
+    <oslc:serviceProvider rdf:resource="https://jazz-server:9443/ccm/oslc/contexts/_pG5nILDqEfC38tEFCAkmbQ/workitems/services"/>
+    <rtc_ext:CustomListChaine rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ma Chaine 2</rtc_ext:CustomListChaine>
+    <dcterms:title rdf:parseType="Literal">Child Defect</dcterms:title>
+    <oslc_cm:fixed rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:fixed>
+    <oslc:shortTitle rdf:parseType="Literal">Defect 8</oslc:shortTitle>
+    <rtc_ext:MonEnum rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enum%20de%20test/enum%20de%20test.literal.l2"/>
+    <rtc_cm:timeSheet rdf:resource="https://jazz-server:9443/ccm/oslc/workitems/_9vUXsLohEfCoBvH4zpHzlA/rtc_cm:timeSheet"/>
+    <dcterms:contributor rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <rtc_cm:type rdf:resource="https://jazz-server:9443/ccm/oslc/types/_pG5nILDqEfC38tEFCAkmbQ/defect"/>
+    <rtc_ext:com.ibm.team.apt.attribute.planitem.blockedReason rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></rtc_ext:com.ibm.team.apt.attribute.planitem.blockedReason>
+    <dcterms:creator rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <rtc_cm:state rdf:resource="https://jazz-server:9443/ccm/oslc/workflows/_pG5nILDqEfC38tEFCAkmbQ/states/com.ibm.team.workitem.defectWorkflow/com.ibm.team.workitem.defectWorkflow.state.s6"/>
+    <rtc_ext:CustomAttribute rdf:datatype="http://www.w3.org/2001/XMLSchema#string">My filed custom attribute</rtc_ext:CustomAttribute>
+    <rtc_cm:estimate rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3600000</rtc_cm:estimate>
+    <acp:accessControl rdf:resource="https://jazz-server:9443/ccm/oslc/access-control/_qP9DMcn_EfCv85lfWlrT8g"/>
+    <acc:accessContext rdf:resource="https://jazz-server:9443/ccm/acclist#_qP9DMcn_EfCv85lfWlrT8g"/>
+    <rtc_ext:MonEnumList rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enumerationList$enum%20de%20test/enum%20de%20test.literal.l1"/>
+    <rtc_ext:MonEnumList rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enumerationList$enum%20de%20test/enum%20de%20test.literal.l3"/>
+    <rtc_ext:archived rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</rtc_ext:archived>
+    <oslc_cmx:project rdf:resource="https://jazz-server:9443/ccm/oslc/projectareas/_pG5nILDqEfC38tEFCAkmbQ"/>
+    <process:teamArea rdf:resource="https://jazz-server:9443/ccm/process/team-areas/_qP9DMcn_EfCv85lfWlrT8g"/>
+    <rtc_ext:CustomListChaine rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ma Chaine 1</rtc_ext:CustomListChaine>
+    <rtc_ext:CustomContributor rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <rtc_ext:CustomHorodatage rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-12-11T11:00:00.000Z</rtc_ext:CustomHorodatage>
+    <rtc_ext:contextId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_qP9DMcn_EfCv85lfWlrT8g</rtc_ext:contextId>
+    <rtc_ext:CustomItemList rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <rtc_cm:resolvedBy rdf:resource="https://jazz-server:9443/jts/users/unassigned"/>
+    <rdf:type rdf:resource="http://open-services.net/ns/cm#ChangeRequest"/>
+    <oslc_pl:schedule rdf:resource="https://jazz-server:9443/ccm/oslc/workitems/_9vUXsLohEfCoBvH4zpHzlA/schedule"/>
+    <dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-12-10T19:38:18.230Z</dcterms:modified>
+    <rtc_cm:filedAgainst rdf:resource="https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.Category/_5kSp4MsFEfCTEKIuorNaXA"/>
+    <process:projectArea rdf:resource="https://jazz-server:9443/ccm/process/project-areas/_pG5nILDqEfC38tEFCAkmbQ"/>
+    <dcterms:type rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Defect</dcterms:type>
+    <rtc_ext:com.ibm.team.apt.attribute.planitem.blocked rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</rtc_ext:com.ibm.team.apt.attribute.planitem.blocked>
+    <rtc_cm:repository rdf:resource="https://jazz-server:9443/ccm/oslc/repository"/>
+    <oslc_cm:reviewed rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:reviewed>
+    <rtc_ext:CustomCategory rdf:resource="https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.Category/_rHe-0LDqEfCOFslQOGWoog"/>
+    <rtc_cm:due rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-12-11T11:00:00.000Z</rtc_cm:due>
+    <oslc_cm:inprogress rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:inprogress>
+    <rtc_ext:CustomEntier rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">42</rtc_ext:CustomEntier>
+    <dcterms:description rdf:parseType="Literal"></dcterms:description>
+    <oslc_cmx:priority rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/priority/priority.literal.l01"/>
+    <rtc_cm:modifiedBy rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <oslc:shortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">8</oslc:shortId>
+    <rtc_cm:progressTracking rdf:resource="https://jazz-server:9443/ccm/oslc/workitems/_9vUXsLohEfCoBvH4zpHzlA/progressTracking"/>
+    <dcterms:subject rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></dcterms:subject>
+    <rtc_cm:teamArea rdf:resource="https://jazz-server:9443/ccm/oslc/teamareas/_qP9DMcn_EfCv85lfWlrT8g"/>
+    <oslc_cm:verified rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:verified>
+    <rtc_cm:subscribers rdf:resource="https://jazz-server:9443/jts/users/smaamari"/>
+    <oslc:instanceShape rdf:resource="https://jazz-server:9443/ccm/oslc/shapes/workitems/_9vUXsLohEfCoBvH4zpHzlA"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">8</dcterms:identifier>
+    <rtc_ext:CustomIteration rdf:resource="https://jazz-server:9443/ccm/oslc/iterations/_pJgPM7DqEfCOFslQOGWoog"/>
+    <dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-11-05T08:32:36.560Z</dcterms:created>
+    <oslc_cm:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Reopened</oslc_cm:status>
+    <oslc:discussedBy rdf:resource="https://jazz-server:9443/ccm/oslc/workitems/_9vUXsLohEfCoBvH4zpHzlA/rtc_cm:comments"/>
+    <rtc_ext:MonEnumList rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enumerationList$enum%20de%20test/enum%20de%20test.literal.l2"/>
+    <rtc_ext:CustomBoolean rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</rtc_ext:CustomBoolean>
+    <oslc_cm:approved rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:approved>
+    <oslc_cmx:severity rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/severity/severity.literal.l3"/>
+    <oslc_cm:closed rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</oslc_cm:closed>
+    <rtc_cm:com.ibm.team.workitem.linktype.parentworkitem.parent rdf:resource="https://jazz-server:9443/ccm/resource/itemName/com.ibm.team.workitem.WorkItem/7"/>
+    <rtc_ext:CustomComplexity rdf:resource="https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/complexity/1"/>
+    <rtc_cm:correctedEstimate rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">28800000</rtc_cm:correctedEstimate>
+  </rdf:Description>
+</rdf:RDF>
+
+/*
+
+{name: "Modified Date", 	rest: "modified", 					visible: false, editable: false, 		type: "timestamp"},
+{name: "Resolution Date",	rest: "resolutionDate", 			visible: false, editable: false, 		type: "timestamp"},
+{name: "Creation Date",		rest: "creationDate", 				visible: false, editable: false, 		type: "timestamp"},
+{name: "Due Date", 			rest: "dueDate", 					visible: false, editable: "configurable",type: "timestamp"},
+*/
+
+    <rtc_cm:due rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-12-11T11:00:00.000Z</rtc_cm:due>
+
+
+
+(modified|resolutionDate|creationDate|dueDate|plannedStartDate)
+
+
+
+
+Done viewing
+{name: "Type", 				rest: "type/name", 												visible: true,  editable: false, 		type: "string"}
+{name: "State", 			rest: "state/name",												visible: true,  editable: "configurable",type: "state"},
+{name: "Resolution", 		rest: "resolution/name", 										visible: false, editable: "configurable",type: "resolution"},
+{name: "contextId", 		rest: "contextId", 												visible: true,  editable: false, 		type: "string"},
+{name: "paContextId", 		rest: "projectArea/contextId", 									visible: true,  editable: false, 		type: "string"},
+{name: "Url", 				rest: "itemId", 												visible: true,  editable: false, 		type: "string"},
+{name: "Commentaires", 		rest: "comments/(creationDate|creator/name|formattedContent)", 	visible: false, editable: false, 		type: "array"},
+{name: "Created By", 		rest: "creator/name", 											visible: false, editable: false, 		type: "contributor"},
+{name: "Filed Against", 	rest: "category/name",											visible: false, editable: "configurable",type: "category"},
+{name: "Found In", 			rest: "foundIn/name", 											visible: false, editable: "configurable",type: "deliverable"},
+{name: "Summary", 			rest: "summary", 												visible: true,  editable: "configurable",type: "string"},
+{name: "Modified By", 		rest: "modifiedBy/name", 										visible: false, editable: false, 		type: "contributor"},
+{name: "Planned For", 		rest: "target/name", 											visible: false, editable: "configurable",type: "iteration"},
+{name: "Priority", 			rest: "priority/name", 											visible: false, editable: "configurable",type: "priority"},
+{name: "Zone de projet",	rest: "projectArea/name", 										visible: false, editable: false, 		type: "string"},
+{name: "Resolved By", 		rest: "resolver/name", 											visible: false, editable: false, 		type: "constributor"},
+{name: "Severity", 			rest: "severity/name", 											visible: false, editable: "configurable",type: "severity"},
+{name: "Subscribed By", 	rest: "subscriptions/name", 									visible: false, editable: false, 		type: "contributor"},
+{name: "Owned By", 			rest: "owner/name",												visible: true,  editable: "configurable",type: "contributor"},
+{name: "Id", 				rest: "id", 													visible: true,  editable: false, 		type: "integer"},
+{name: "Tags", 				rest: "tags", 						visible: false, editable: "configurable",type: "pipearray"},
+{name: "Description", 		rest: "formattedDescription", 		visible: false, editable: false,		type: "string"},
+{name: "Time Spent", 		rest: "timeSpent", 					visible: false, editable: "configurable",type: "duration"},
+{name: "Durée", 			rest: "correctedEstimate", 			visible: false, editable: "configurable",type: "duration"},
+{name: "Estimate", 			rest: "duration", 					visible: false, editable: "configurable",type: "duration"},
+
+{name: "Modified Date", 	rest: "modified", 					visible: false, editable: false, 		type: "timestamp"},
+{name: "Resolution Date",	rest: "resolutionDate", 			visible: false, editable: false, 		type: "timestamp"},
+{name: "Creation Date",		rest: "creationDate", 				visible: false, editable: false, 		type: "timestamp"},
+{name: "Due Date", 			rest: "dueDate", 					visible: false, editable: "configurable",type: "timestamp"},
+{name: "Start Date", 		rest: "plannedStartDate", 			visible: false, editable: false,			type: "timestamp"},
+
+
+CustomString 			https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/*|customAttributes[identifier=<AllExtensionKey>]/attributeType)
+CustomBoolean			https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/*|customAttributes[identifier=<AllExtensionKey>]/attributeType)
+CustomInteger			https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/*|customAttributes[identifier=<AllExtensionKey>]/attributeType)
+CustomEnumeration		https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/*|customAttributes[identifier=<AllExtensionKey>]/(attributeType|projectArea/enumerations[id=<CustomAttributeAttributeType>]/(id|literals/(id|name))))
+CustomEnumerationList	https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName="Mon Enum List"]/*|customAttributes[identifier=*]/(attributeType|projectArea/enumerations[id=*]/(id|literals/(id|name))))
+CustomCategory			https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/(*|displayName|key|type|itemValue/*)|customAttributes[identifier=<AllExtensionKey>]/attributeType))
+CustomContributor		https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/(*|displayName|key|type|itemValue/*)|customAttributes[identifier=<AllExtensionKey>]/attributeType))
+CustomComplexity		https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/(*|displayName|key|type|itemValue/*)|customAttributes[identifier=<AllExtensionKey>]/attributeType))
+CustomHorodatage		https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/(*|displayName|key|type|itemValue/*)|customAttributes[identifier=<AllExtensionKey>]/attributeType))
+
+
+
+
+CustomIteration			https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=<DisplayName>]/(*|displayName|key|type|itemValue/*)|customAttributes[identifier=<AllExtensionKey>]/(attributeType|projectArea/enumerations[id=<CustomAttributeAttributeType>]/(id|literals/(id|name))))
+
+
+pour tous
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/
+
+allExtensions/(*|displayName|key|type|itemValue/*)|customAttributes/(attributeType|projectArea/enumerations/(id|literals/(id|name)))
+
+
+
+CustomItemList (Non pris en charge)
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=CustomItemList]/(*|key|type|itemValue/*)|customAttributes[identifier=CustomItemList]/attributeType))
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=CustomListChaine]/*|customAttributes/(attributeType|projectArea/enumerations/(id|literals/(id|name))))
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=CustomListChaine]/*|customAttributes[identifier=CustomListChaine]/(attributeType|projectArea/enumerations[id=%22enum%20de%20test%22]/(id|literals/(id|name))))
+
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=CustomListChaine]/*|customAttributes[identifier=CustomListChaine]/(attributeType|projectArea/enumerations/(id|literals/(id|name))))
+
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName="Mon Enum List"]/*|customAttributes/(attributeType|projectArea/enumerations/(id|literals/(id|name))))
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName="Mon Enum List"]/*|customAttributes[identifier=MonEnumList]/(attributeType|projectArea/enumerations/(id|literals/(id|name))))
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName="Mon Enum List"]/*|customAttributes[identifier=MonEnumList]/(attributeType|projectArea/enumerations/(id|literals/(id|name))))
+
+
+
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=%22Mon%20Enum%20List%22]/*|customAttributes[identifier=MonEnumList]/(attributeType|projectArea/enumerations[id=%22enumerationList$enum%20de%20test%22]/(id|literals/(id|name))))
+
+
+
+
+https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=8]/(allExtensions[displayName=%22Mon%20Enum%20List%22]/*|customAttributes[identifier=MonEnumList]/(identifier|attributeType|projectArea/enumerations[id=%22enumerationList$enum%20de%20test%22]/(id|literals/(id|name))))
+
+
+
+
+
+Lecture
+Validé
+Custom Attribute,Mon Enum,CustomBoolean,CustomCategory,Commentaires
+Subscribed By,Planned For,Time Spent,
+Estimate,Modified By,Resolved By,Severity,Durée
+Created By,Tags,Priority,Zone de projet,Resolution
+Description,Filed Against,Found In
+CustomContributor,CustomComplexity,CustomEntier
+CustomIteration,CustomListChaine,Mon Enum List
+CustomHorodatage,Due Date,Modified Date,Resolution Date,Creation Date
+
+
+Edition
+Validé
+Custom Attribute,Mon Enum,CustomCategory,Severity,Priority,Resolution
+Filed Against,Found In,CustomComplexity,Due Date,Summary
+Owned By,CustomHorodatage,Due Date
+CustomBoolean,Planned For,Resolution,Tags
+Estimate,Time Spent,Durée,CustomContributor,CustomHorodatage
+CustomEntier,CustomIteration,CustomListChaine,Mon Enum List
+
+
+
+
+
+
+
+Modification
+
+KO
+
+,
+Custom Attribute,Mon Enum,CustomCategory
+CustomComplexity,Due Date,CustomHorodatage
+CustomBoolean,Planned For,Tags
+Estimate,Time Spent,Durée,CustomContributor
+CustomEntier,CustomIteration,CustomListChaine,Mon Enum List
+
+
+
+Validé
+Summary,Owned By,State,Severity,Priority,Filed Against,Found In,Resolution
+
+
+
+
+
+
+{name: "Durée", 			rest: "correctedEstimate", 										visible: false, editable: "configurable",type: "duration"},
+{name: "Due Date", 			rest: "dueDate", 												visible: false, editable: "configurable",type: "timestamp"},
+{name: "Estimate", 			rest: "duration", 												visible: false, editable: "configurable",type: "duration"},
+{name: "Filed Against", 	rest: "category/(name|reportableUrl)",							visible: false, editable: "configurable",type: "category"},
+{name: "Found In", 			rest: "foundIn/name", 											visible: false, editable: "configurable",type: "deliverable"},
+{name: "Owned By", 			rest: "owner/(name|reportableUrl)",								visible: true,  editable: "configurable",type: "contributor"},
+{name: "Planned For", 		rest: "target/(name|reportableUrl)", 							visible: false, editable: "configurable",type: "iteration"},
+{name: "Priority", 			rest: "priority/name", 											visible: false, editable: "configurable",type: "priority"},
+{name: "Resolution", 		rest: "resolution/name", 										visible: false, editable: "configurable",type: "resolution"},
+{name: "Severity", 			rest: "severity/name", 											visible: false, editable: "configurable",type: "severity"},
+{name: "State", 			rest: "state/name",												visible: true,  editable: "configurable",type: "state"},
+{name: "Summary", 			rest: "summary", 												visible: true,  editable: "configurable",type: "string"},
+{name: "Tags", 				rest: "tags", 													visible: false, editable: "configurable",type: "pipearray"},
+{name: "Time Spent", 		rest: "timeSpent", 												visible: false, editable: "configurable",type: "duration"},
+
+
+
+		wellKnownAttributes : [
+{name: "contextId", 		rest: "contextId", 												visible: true,  editable: false, 		type: "string"},
+{name: "paContextId", 		rest: "projectArea/contextId", 									visible: true,  editable: false, 		type: "string"},
+{name: "Url", 				rest: "itemId", 												visible: true,  editable: false, 		type: "string"},
+{name: "Commentaires", 		rest: "comments/(creationDate|creator/name|formattedContent)", 	visible: false, editable: false, 		type: "string"},
+{name: "Durée", 			rest: "correctedEstimate", 										visible: false, editable: "configurable",type: "duration", oslckey: "rtc_cm:correctedEstimate"},
+{name: "Created By", 		rest: "creator/name", 											visible: false, editable: false, 		type: "string"},
+{name: "Creation Date",		rest: "creationDate", 											visible: false, editable: false, 		type: "timestamp"},
+{name: "Description", 		rest: "formattedDescription", 									visible: false, editable: false,		type: "string"},
+{name: "Due Date", 			rest: "dueDate", 												visible: false, editable: "configurable",type: "timestamp", oslckey: "rtc_cm:due"},
+{name: "Estimate", 			rest: "duration", 												visible: false, editable: "configurable",type: "duration", oslckey: "rtc_cm:estimate"},
+{name: "Filed Against", 	rest: "category/(name|reportableUrl)",							visible: false, editable: "configurable",type: "category", oslckey: "rtc_cm:filedAgainst"},
+{name: "Found In", 			rest: "foundIn/name", 											visible: false, editable: "configurable",type: "deliverable", oslckey: "rtc_cm:foundIn"},
+{name: "Id", 				rest: "id", 													visible: true,  editable: false, 		type: "integer"},
+{name: "Modified By", 		rest: "modifiedBy/name",				 						visible: false, editable: false, 		type: "string"},
+{name: "Modified Date", 	rest: "modified", 												visible: false, editable: false, 		type: "timestamp"},
+{name: "Owned By", 			rest: "owner/(name|reportableUrl)",								visible: true,  editable: "configurable",type: "contributor", oslckey: "dcterms:contributor"},
+{name: "Planned For", 		rest: "target/(name|reportableUrl)", 							visible: false, editable: "configurable",type: "iteration", oslckey: "rtc_cm:plannedFor"},
+{name: "Priority", 			rest: "priority/name", 											visible: false, editable: "configurable",type: "priority", oslckey: "oslc_cmx:priority"},
+{name: "Zone de projet",	rest: "projectArea/name", 										visible: false, editable: false, 		type: "string"},
+{name: "Resolution", 		rest: "resolution/name", 										visible: false, editable: "configurable",type: "resolution", oslckey: "rtc_cm:resolution"},
+{name: "Resolution Date",	rest: "resolutionDate", 										visible: false, editable: false, 		type: "timestamp"},
+{name: "Resolved By", 		rest: "resolver/name", 											visible: false, editable: false, 		type: "string"},
+{name: "Severity", 			rest: "severity/name", 											visible: false, editable: "configurable",type: "severity", oslckey: "oslc_cmx:severity"},
+{name: "State", 			rest: "state/name",												visible: true,  editable: "configurable",type: "state", oslckey: "rtc_cm:state"},
+{name: "Start Date", 		rest: "plannedStartDate", 										visible: false, editable: false,			type: "timestamp"},
+{name: "Subscribed By", 	rest: "subscriptions/name", 									visible: false, editable: false, 		type: "string"},
+{name: "Summary", 			rest: "summary", 												visible: true,  editable: "configurable",type: "string", oslckey: "dcterms:title"},
+{name: "Tags", 				rest: "tags", 													visible: false, editable: "configurable",type: "pipearray", oslckey: "dcterms:subject"},
+{name: "Time Spent", 		rest: "timeSpent", 												visible: false, editable: "configurable",type: "duration", oslckey: ""},
+{name: "Type", 				rest: "type/name", 												visible: true,  editable: false, 		type: "string"}
+		],

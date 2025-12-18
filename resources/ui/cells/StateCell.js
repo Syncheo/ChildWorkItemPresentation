@@ -25,6 +25,16 @@ define([
         onChange: null,  // callback lors du changement
 		widget: null,
 
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
         constructor: function(args){
 			this.element = args.element || {};
 			this.workItemId = args.workItemId || {}
@@ -80,6 +90,7 @@ define([
 						element: self.element // Peut être utile pour l'identification
 					});
 					
+					self.element.datatype = "resource";
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 			        self.onChange(selectedId, self.element);
 			    })

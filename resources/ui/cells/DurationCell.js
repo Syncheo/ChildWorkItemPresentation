@@ -6,16 +6,12 @@
 
 define([
     "dojo/_base/declare",
-    "dijit/form/ComboBox",
-    "dojo/store/Memory",
+    "dijit/form/TextBox",
 	"dijit/_WidgetBase",
-	"../XhrHelpers",
-	"../JazzHelpers",
 	"dojo/dom-construct",
 	"dojo/on"
-], function(declare, ComboBox, Memory, 
-	_WidgetBase, 
-	XHR, JAZZ, domConstruct, on){
+], function(declare, TextBox,
+	_WidgetBase, domConstruct, on){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DurationCell", 
 		[_WidgetBase], {
@@ -23,6 +19,17 @@ define([
         element: {},
         onChange: null,  // callback lors du changement
 		widget: null,
+		
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
 		
         constructor: function(args){
             this.element = args.element || {};

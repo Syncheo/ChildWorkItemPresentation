@@ -45,7 +45,10 @@ define([
          * @returns {string} Le XML RDF/OSLC.
          */
         _buildRdfXml: function(dataToUpdate) {
-			var data = dataToUpdate.data;
+			var value = dataToUpdate.data.value;
+			var oslckey = dataToUpdate.data.oslckey;
+			var datatype = dataToUpdate.data.datatype;
+			
 			var url = dataToUpdate.url;
 			
 			var xmlDoc = document.implementation.createDocument(this.rdfNs, "rdf:RDF", null	);
@@ -69,48 +72,84 @@ define([
 
 			root.appendChild(desc);
 			
+			for (var oslckey in dataToUpdate.data) {
+				if (oslckey === "rtc_cm:state") continue;
+				var value = dataToUpdate.data[oslckey].value;
+				var datatype = dataToUpdate.data[oslckey].datatype;
+				if (datatype === "Literal") {
+					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
+				} else if (datatype !== "resource") {
+					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value, datatype);
+				} else if (datatype === "resource") {
+					this._addResourceElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
+				}
+			}
+			
+			
+			
 				
-			// Champs Littéraux (TEXTE)
-			this._addLiteralElement(xmlDoc, desc, this.dctermsNs, "dcterms:title", data["Summary"] );
+			// Summary
+			
 			// Gérer les Tags (Littéral avec un type de données XSD)
-			// Le contenu doit être déjà joint avec ", " si c'est une liste
+			// Tags
 			this._addLiteralElement(xmlDoc, desc, this.dctermsNs, "dcterms:subject", data["Tags"], "http://www.w3.org/2001/XMLSchema#string");
-			// Champs Ressources (LIENS / URI)
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:filedAgainst", data["Filed Against"]);
-
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:foundIn", data["Found In"]	);
-
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:plannedFor", data["Planned For"] );
-
-			this._addResourceElement(xmlDoc, desc, this.dctermsNs, "dcterms:contributor", data["Owned By"] );
-
-			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:severity", data["Severity"] );
-
-			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:priority", data["Priority"] );
+			//test1, test2
 			
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["Resolution"] );
-			//<rtc_cm:resolution rdf:resource="https://jazz-server:9443/ccm/oslc/workflows/_pG5nILDqEfC38tEFCAkmbQ/resolutions/com.ibm.team.workitem.defectWorkflow/3"/>
+			//Filed Against
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:filedAgainst", data["rtc_cm:filedAgainst"]);
+
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:foundIn", data["rtc_cm:foundIn"]	);
+
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:plannedFor", data["rtc_cm:plannedFor"] );
+
+			this._addResourceElement(xmlDoc, desc, this.dctermsNs, "dcterms:contributor", data["dcterms:contributor"] );
+
+			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:severity", data["oslc_cmx:severity"] );
+
+			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:priority", data["oslc_cmx:priority"] );
 			
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["Resolution"] );
-
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:timeSpent", data["Durée"], "http://www.w3.org/2001/XMLSchema#integer");
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:estimate", data["Estimate"], "http://www.w3.org/2001/XMLSchema#integer");
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:correctedEstimate", data["Time Spent"], "http://www.w3.org/2001/XMLSchema#integer");
+			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["rtc_cm:resolution"] );
 			
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:due", data["Due Date"], "http://www.w3.org/2001/XMLSchema#dateTime");
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:timeSpent", data["rtc_cm:timeSpent"], "http://www.w3.org/2001/XMLSchema#integer");
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:estimate", data["rtc_cm:estimate"], "http://www.w3.org/2001/XMLSchema#integer");
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:correctedEstimate", data["rtc_cm:correctedEstimate"], "http://www.w3.org/2001/XMLSchema#integer");
+			
+			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:due", data["rtc_cm:due"], "http://www.w3.org/2001/XMLSchema#dateTime");
 
-
+			/*
+			*/
 									
 			// --- Traitement spécial pour l'action de transition (inchangé) ---
-			if (data["State"]) {
+			if (data["rtc_cm:state"]) {
 			    // Si la transition change, on modifie l'URL, pas le XML
-			    url = url + "?_action=" + data["State"];
+			    url = url + "?_action=" + data["rtc_cm:state"];
 			}
 			var xmlString = new XMLSerializer().serializeToString(xmlDoc);
 			console.log(xmlString);
             
             return {data: xmlString, url: url };
         },
+		
+		
+		getNamespace: function(oslckey) {
+			var key = "";
+			var keys = oslckey.split(":")
+			key = keys[0];
+			var nsMapping = {
+				dcterms: this.dctermsNs,
+				rtc_ext: this.rtcExtNs,
+				oslc: this.oslcNs,
+				acp: this.acpNs,
+				oslc_cm: this.oslcCmNs,
+				oslc_cmx: this.oslcCmxNs,
+				oslc_pl: this.oslcPlNs,
+				acc: this.oslcAccNs,
+				rtc_cm: this.rtcCmNs,
+				process: this.processNs
+			}
+			
+			return nsMapping[key];
+		},
 		
 		/**
 		 * Crée et attache un élément XML de type RESSOURCE (avec rdf:resource).

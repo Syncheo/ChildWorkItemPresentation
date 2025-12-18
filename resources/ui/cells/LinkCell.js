@@ -10,9 +10,21 @@ define([
         domNode: null,
 		widget: null,
 
-        constructor: function (value, href) {
-            this.value = value;
-            this.href = href || "#";
+		
+		/*
+		var args = {
+			element: childElemt,
+			paContextId: contextIds.paContextId,
+			workItemId: contextIds.id,
+			contextId: contextIds.contextId,
+			onChange: callback
+		};
+		*/
+		
+		
+        constructor: function (args) {
+            this.value = args.value;
+            this.href = args.url || "#";
         },
 
         /**

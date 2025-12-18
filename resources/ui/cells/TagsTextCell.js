@@ -12,12 +12,11 @@ define([
 	"dojo/on"
 ], function(declare, TextBox, _WidgetBase, domConstruct, on) {
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.EditableTextCell", [_WidgetBase], {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.TagsTextCell", [_WidgetBase], {
 
         element: {},
         onChange: null, // callback quand la valeur change
 		widget: null,
-		isList: false,
 
 		
 		/*
@@ -38,13 +37,14 @@ define([
 		render: function (tdElement) {
 			var self = this;
 			
+			var self = this;
 			var str = self.element.value
 
 			if (self.startAndEndsWithPipe(str)) {
-				self.isList = true;
 				str = self.formatPipeString(str);
 			}
-
+			
+			
 
 			var container = domConstruct.create("div", {
                 style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
@@ -67,24 +67,35 @@ define([
 
 			self.own(
 			    on(self.widget.focusNode, "input", function(evt) {
-			        var val = evt.target.value;  // valeur réellement saisie
-					var formattedValue = "";
-					if (self.isList) {
-						if (val && val.length > 0) {
-						    formattedValue = "|" + newValues.join("|") + "|";
-						}	
-					} else {
-						formattedValue = val;
-					}
-
+			        var val = self.formatStringToPipe(evt.target.value);  // valeur réellement saisie
+			        console.log("Nouvelle valeur :", val);
 					self.element.datatype = "http://www.w3.org/2001/XMLSchema#string";
-			        console.log("Nouvelle valeur :", formattedValue);
-			        self.onChange(formattedValue, self.element);
+			        self.onChange(self.formatPipeString(val), self.element);
 			    })
 			);
 			
 		},
 		
+		formatPipeString: function(tags) {
+			var parts = tags.split('|');
+			var filteredTags = parts.filter(Boolean);
+
+			return filteredTags.join(', ');
+		},
+		
+		formatStringToPipe: function(str) {
+			var parts = str.split(',');
+			var filteredTags = parts.filter(Boolean).map(function(e) {
+				return e.trim();
+			});
+			
+			var rex = filteredTags.join("|");
+			if (!rex.startsWith("|")) rex = "|" + rex;
+			if (!resultat.endsWith("|")) resultat = resultat + "|";
+			
+			return rex;
+		},
+
 		startAndEndsWithPipe: function(str) {
 		    if (typeof str !== 'string' || str.length < 2) {
 		        return false;
@@ -94,14 +105,7 @@ define([
 		    
 		    return regex.test(str);
 		},
-
-		formatPipeString: function(tags) {
-			var parts = tags.split('|');
-			var filteredTags = parts.filter(Boolean);
-
-			return filteredTags.join(', ');
-		},
-
+		
 		
 		destroy: function() {
 		    var self = this;
