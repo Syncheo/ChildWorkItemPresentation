@@ -2,9 +2,7 @@
 
 This plugin displays the children of an EWM work item in a table format.
 By default, it shows the child’s type, ID, summary, owner, and status.
-It can show other attributes (well known or custom attributes) by configuring it in the eclipse EWM client
-
-It will evolve into a tool allowing direct modification of child items from the parent.
+It can show other attributes (well known or custom attributes) by configuring it in the eclipse EWM client and modify the values of the child item attributes
 
 ## Server Installation
 
@@ -47,7 +45,6 @@ Unlike adding an attribute, you must select the Non-Attribute Presentation radio
 
 ## Plugin Configuration
 
-Currently, the only possible configuration is adding extra attributes to the table.
 To add additional attributes, use the Eclipse EWM client and go to the Process Configuration of the project area.
 
 Then navigate to:
@@ -60,3 +57,27 @@ key: attributes
 value: the names of the attributes to add, separated by commas, with no spaces before and after the commas
 
 Reload the workitem page in your browser, the added attributes should be shown in the table
+
+## Configure the editability of the child item attributes
+
+To define certain attribute as editable, use the Eclipse EWM client and go to the Process Configuration of the project area.
+
+Then navigate to:
+Project Configuration → Configuration Data → Work Items → Editor Presentation
+
+In the section where the Child Workitem Table presentation was added,
+click on it and add to the Properties:
+
+key: editable
+value: the names of the attributes you want to be able to edit
+
+Reload the workitem page in your browser, the added attributes should be shown in the table
+
+
+## List of all the attribute that can be viewed
+All the attributes can be viewed, but by default, the id, Type, Owned By, State and Summary are shown by default
+
+
+## List of all the attribute that can be edited
+All the custom attributes can be viewed as well as
+Durée, Due Date, Estimate, Filed Against, Found In, Owned By, Planned For, Priority, Resolution, Severity, State, Summary, Tags, Time Spent 
