@@ -94,13 +94,25 @@ define([
 			
 			self.own(
 			    self.widget.on("change", function(newValues) {
-					var formattedValue = "";
-                    if (newValues && newValues.length > 0) {
-                        formattedValue = "|" + newValues.join("|") + "|";
-                    }
+					var store = self.widget.get("store");
+					
+					var selectedIds = newValues;
+
+	/*				if (newValues && newValues.length > 0) {
+					    // 2. On boucle sur chaque nom (label) sélectionné
+					    newValues.forEach(function(name) {
+					        // On cherche l'item correspondant dans le store par son nom
+					        var item = store.query({ name: name })[0];
+					        
+					        if (item && item.id) {
+					            selectedIds.push(item.id);
+					        }
+					    });
+					}
+					*/
 					self.element.datatype = "resource";					
 
-                    self.onChange(formattedValue, self.element);
+                    self.onChange(selectedIds, self.element);
 			    })
 			);
 			

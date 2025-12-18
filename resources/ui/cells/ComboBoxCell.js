@@ -60,9 +60,15 @@ define([
 			
 			self.own(
 			    self.widget.on("change", function(newValue) {
-			        // Votre logique de gestion du changement ici
+					var store = self.widget.get("store");
+					
+					//"https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enum%20de%20test/enum%20de%20test.literal.l2"/
+					var selectedItem = store.query({ name: newValue })[0]; 
+					var selectedId = null;
+					if (selectedItem && selectedItem.id) selectedId = selectedItem.id;
+					if (newValue === "") selectedId = ""; 
 					self.element.datatype = "resource";
-					self.onChange(newValue, self.element);
+					self.onChange(selectedId, self.element);
 			    })
 			);
 			

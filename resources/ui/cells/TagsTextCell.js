@@ -91,7 +91,7 @@ define([
 			
 			var rex = filteredTags.join("|");
 			if (!rex.startsWith("|")) rex = "|" + rex;
-			if (!resultat.endsWith("|")) resultat = resultat + "|";
+			if (!rex.endsWith("|")) rex = rex + "|";
 			
 			return rex;
 		},

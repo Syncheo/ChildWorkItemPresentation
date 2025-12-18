@@ -76,22 +76,16 @@ define([
 			
 			self.own(
 			    self.widget.on("change", function(newValue) {
+					
 					var store = self.widget.get("store");
 
-					// 🎯 Étape 2 : Chercher l'objet complet dans le store en utilisant la valeur (name)
 					var selectedItem = store.query({ name: newValue })[0]; 
-
 					var selectedId = null;
-
-					if (selectedItem && selectedItem.id) {
-						selectedId = selectedItem.id;
-					}
-
-					// Si l'utilisateur efface le champ, l'ID est null/vide
-					if (newValue === "") {
-						selectedId = ""; 
-					}
-
+					if (selectedItem && selectedItem.id) selectedId = selectedItem.id;
+					if (newValue === "") selectedId = ""; 
+					self.element.datatype = "resource";
+					self.onChange(selectedId, self.element);
+					
 					self.element.datatype = "resource";	
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 					self.onChange(selectedId, self.element);

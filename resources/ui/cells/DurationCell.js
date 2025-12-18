@@ -62,7 +62,8 @@ define([
 			    on(self.widget.focusNode, "input", function(evt) {
 			        var val = self.convertWorkDaysToMilliseconds(evt.target.value);  // valeur réellement saisie
 			        console.log("Nouvelle valeur :", val);
-			        self.onChange(val, self.element);
+					self.element.datatype = "http://www.w3.org/2001/XMLSchema#integer";
+					self.onChange(val, self.element);
 			    })
 			);
 			

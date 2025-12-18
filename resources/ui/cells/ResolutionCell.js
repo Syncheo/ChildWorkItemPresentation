@@ -95,6 +95,9 @@ define([
 					if (newValue === "") {
 						selectedId = ""; 
 					}
+					
+					self.element.datatype = "resource";					
+
 
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
 			        self.onChange(selectedId, self.element);
@@ -105,9 +108,25 @@ define([
 		getValues: function(actionId) {
 			var self = this;
 			
+			var wId = (self.workItemId && self.workItemId.value) ? self.workItemId.value.trim() : null;
+			var aId = (actionId) ? actionId.toString().trim() : null;
+
+			// 2. Test de validité
+			if (!wId || !aId) {
+ 				    
+			    // On crée le store vide
+			    var emptyStore = new Memory({ data: [] });
+			    
+			    // On met à jour le widget immédiatement
+			    self.widget.set("store", emptyStore); 
+	
+			    return;
+			}
+				
 			var categoryUrl = JAZZ.getApplicationBaseUrl() +
 				"service/fr.syncheo.ewm.childitem.server.IGetResolutionService" +
 				"?workItemId=" + self.workItemId.value + "&actionId=" + actionId;
+
 				
 			XHR.oslcJsonGetRequest(categoryUrl).then(
 				function (jsonString) {

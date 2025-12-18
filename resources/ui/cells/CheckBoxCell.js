@@ -43,12 +43,13 @@ define([
 			    style: "width:100%; box-sizing:border-box; padding:0; margin:0;"
 			}, tdElement);
 
-		
+			var isChecked = String(self.element.value).toLowerCase() === "true";
+			
             // Création du ComboBox
             self.widget = new CheckBox({
 				name: "checkBox",
                 value: "true",
-                checked: !!self.element.value
+                checked: isChecked
             }, container);
 			
 			self.widget.startup();

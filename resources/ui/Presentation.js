@@ -129,7 +129,10 @@ define([
 							configuredAttribut.name = added;
 							configuredAttribut.visible = true;
 							configuredAttribut.editable = "configurable";
-							configuredAttribut.rest = "allExtensions/(displayName|displayValue|key|type|itemValue/*)|customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
+							//https://jazz-server:9443/ccm/rpt/repository/workitem?fields=workitem/workItem[id=9]/projectArea/extensionMetadata/*
+							configuredAttribut.rest = "projectArea/extensionMetadata/*" + "|" + 
+														"allExtensions/(displayName|displayValue|key|type|itemValue/*)" + "|" + 
+														"customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
 						}
 						this.visibleAttributes.push(configuredAttribut)
 					}
@@ -187,11 +190,24 @@ define([
 						}
 														
 						if (childAttributes.rest.includes("allExtensions")) {
-							//configuredAttribut.rest = "allExtensions/(displayName|displayValue|key|type|itemValue/*)|customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
+							var paContextItem = child.find(function(item) {
+							    return item.name === "paContextId";
+							});
 
+							// On récupère la valeur si l'objet a été trouvé
+							var paContextId = paContextItem ? paContextItem.value : null;
+							if (!paContextId) {
+								paContextId = self.getValueByNameAttribute(c, "projectArea/contextId");
+							}
+							
+							
+							//configuredAttribut.rest = "allExtensions/(displayName|displayValue|key|type|itemValue/*)|customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
+							var extensionMetadata = self.getExtensionMetadata(c, childAttributes.name);
+							childAttributes.oslckey = "rtc_ext:" + extensionMetadata.key;
+							childAttributes.isEnumeration = extensionMetadata.isEnumeration;
+							
 							var extension = self.getAllExtensionsDisplayValue(c, childAttributes.name);
-							var customAttribute = self.getCustomAttributeData(c, extension); //var defaultValue = { value: "", type: "", key: "" };
-							childAttributes.oslckey = "rtc_ext:" + extension.key;
+							var customAttribute = self.getCustomAttributeData(c, paContextId, extension); //var defaultValue = { value: "", type: "", key: "" };
 							childAttributes.value = extension.value;									
 							childAttributes.type = customAttribute.type;
 							childAttributes.values = customAttribute.enumerations
@@ -319,8 +335,7 @@ define([
 				});
 				cr.placeAt(self.childrenBody);
 			    cr.startup();
-				self.childRowWidgets.push(cr);
-						
+				self.childRowWidgets.push(cr);			
 			}
 		
 		},
@@ -504,9 +519,9 @@ define([
 			return (typeof text === "string" ? text : "");												
 		},
 
-		getCustomAttributeData: function(workItem, extension) {
+		getCustomAttributeData: function(workItem, paContextId, extension) {
 			//var defaultValue = { value: "", type: "", key: "" };
-			
+
 		    
 		    var defaultValue = { 
 		        type: extension.type, 
@@ -547,13 +562,20 @@ define([
 			
 			var literals = Array.from(matchingEnumerationNode.getElementsByTagName("literals") || []);
 			
+			//"https://jazz-server:9443/ccm/oslc/enumerations/_pG5nILDqEfC38tEFCAkmbQ/enum%20de%20test/enum%20de%20test.literal.l2"/>
+
+			
 			if (literals.length > 0) {
 				enumerations = literals.map(function(literal) {
-				    var idNode   = literal.getElementsByTagName("id")[0];
-				    var nameNode = literal.getElementsByTagName("name")[0];
+					
+					var idNode = literal.getElementsByTagName("id")[0];
+					var id = (idNode && idNode.textContent) || "";
+				    var urlId   = JAZZ.getApplicationBaseUrl() + "oslc/enumerations/" + paContextId +"/" + defaultValue.type + "/" + id;
+									    
+					var nameNode = literal.getElementsByTagName("name")[0];
 				    
 				    return {
-				        id: (idNode && idNode.textContent) || null,
+				        id: urlId,
 				        name: (nameNode && nameNode.textContent) || null
 				    };
 				});
@@ -576,6 +598,36 @@ define([
 			
 
 
+			
+		},
+		
+		getExtensionMetadata: function(workItem, targetDisplayName) {
+			var defaultExtensionMetadata = {key: "", type: "", isEnumeration: "", };
+			/*
+			<extensionMetadata>
+			<key>MonEnum</key>
+			<displayName>Mon Enum</displayName>
+			<type>enum de test</type>
+			<isEnumeration>true</isEnumeration>
+			<archived>false</archived>
+			<workItemType/>
+			</extensionMetadata>
+			*/
+			if (!workItem) return defaultValue;
+			var exts = Array.from(workItem.getElementsByTagName("extensionMetadata") || []);
+			var foundExt = exts.find(function(ext) {
+				var displayNameNode = ext.getElementsByTagName("displayName")[0];
+				var displayName = (displayNameNode && displayNameNode.textContent) || null;
+				return displayName === targetDisplayName;
+			});
+			
+			if (foundExt) {
+				defaultExtensionMetadata.type = (foundExt.getElementsByTagName("type")[0] || {}).textContent || "";
+				defaultExtensionMetadata.key  = (foundExt.getElementsByTagName("key")[0]  || {}).textContent || "";
+				defaultExtensionMetadata.isEnumeration  = (foundExt.getElementsByTagName("isEnumeration")[0]  || {}).textContent || "";
+			}
+
+			return defaultExtensionMetadata;
 			
 		},
 				

@@ -77,7 +77,9 @@ define([
                     // On ne propage le changement que si la valeur est valide (respecte les constraints)
                     if (self.widget.isValid()) {
                         console.log("Valeur entière validée :", newNumericValue);
-                        self.onChange(newNumericValue, self.element);
+						self.element.datatype = "http://www.w3.org/2001/XMLSchema#integer";					
+
+						self.onChange(newNumericValue, self.element);
                     } else {
                         console.warn("Saisie invalide ignorée");
                     }

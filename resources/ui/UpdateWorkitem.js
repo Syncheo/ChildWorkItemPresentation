@@ -69,6 +69,7 @@ define([
 			
 			// Description
 			var desc = xmlDoc.createElementNS(this.rdfNs, "rdf:Description" );
+			desc.setAttributeNS(this.rdfNs, "rdf:about", url);
 
 			root.appendChild(desc);
 			
@@ -79,56 +80,55 @@ define([
 				if (datatype === "Literal") {
 					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
 				} else if (datatype !== "resource") {
-					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value, datatype);
+					if (this.getType(value) === "array") {
+						for(var i = 0; i < value.length; i++) {
+							var oslcelement = xmlDoc.createElement(oslckey);
+							oslcelement.setAttribute("rdf:datatype", datatype);
+							oslcelement.textContent = value[i];
+							desc.appendChild(oslcelement);
+						}
+					} else {
+						var oslcelement = xmlDoc.createElement(oslckey);
+						oslcelement.setAttribute("rdf:datatype", datatype);
+						oslcelement.textContent = value;
+						desc.appendChild(oslcelement);
+					}
+					
+
 				} else if (datatype === "resource") {
-					this._addResourceElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
+					if (this.getType(value) === "array") {
+						for(var i = 0; i < value.length; i++) {
+							this._addResourceElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value[i]);
+						}
+					} else {
+						this._addResourceElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
+					}
+				this._addResourceElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
 				}
 			}
 			
-			
-			
+			if (dataToUpdate && dataToUpdate.data) {
+				var stateObject = dataToUpdate.data["rtc_cm:state"];
 				
-			// Summary
-			
-			// Gérer les Tags (Littéral avec un type de données XSD)
-			// Tags
-			this._addLiteralElement(xmlDoc, desc, this.dctermsNs, "dcterms:subject", data["Tags"], "http://www.w3.org/2001/XMLSchema#string");
-			//test1, test2
-			
-			//Filed Against
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:filedAgainst", data["rtc_cm:filedAgainst"]);
-
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:foundIn", data["rtc_cm:foundIn"]	);
-
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:plannedFor", data["rtc_cm:plannedFor"] );
-
-			this._addResourceElement(xmlDoc, desc, this.dctermsNs, "dcterms:contributor", data["dcterms:contributor"] );
-
-			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:severity", data["oslc_cmx:severity"] );
-
-			this._addResourceElement(xmlDoc, desc, this.oslcCmxNs, "oslc_cmx:priority", data["oslc_cmx:priority"] );
-			
-			this._addResourceElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:resolution", data["rtc_cm:resolution"] );
-			
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:timeSpent", data["rtc_cm:timeSpent"], "http://www.w3.org/2001/XMLSchema#integer");
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:estimate", data["rtc_cm:estimate"], "http://www.w3.org/2001/XMLSchema#integer");
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:correctedEstimate", data["rtc_cm:correctedEstimate"], "http://www.w3.org/2001/XMLSchema#integer");
-			
-			this._addLiteralElement(xmlDoc, desc, this.rtcCmNs, "rtc_cm:due", data["rtc_cm:due"], "http://www.w3.org/2001/XMLSchema#dateTime");
-
-			/*
-			*/
-									
-			// --- Traitement spécial pour l'action de transition (inchangé) ---
-			if (data["rtc_cm:state"]) {
-			    // Si la transition change, on modifie l'URL, pas le XML
-			    url = url + "?_action=" + data["rtc_cm:state"];
+				if (stateObject && stateObject.value) {
+					var stateValue = stateObject.value;
+			        if (stateValue.trim() !== "") {
+			            url = url + "?_action=" + stateValue;
+			        }
+			    }
 			}
 			var xmlString = new XMLSerializer().serializeToString(xmlDoc);
 			console.log(xmlString);
             
             return {data: xmlString, url: url };
         },
+		
+		getType: function(obj) {
+		    if (Array.isArray(obj)) return "array";
+		    if (typeof obj === "string") return "string";
+		    if (obj === null) return "null";
+		    return typeof obj;
+		},
 		
 		
 		getNamespace: function(oslckey) {

@@ -71,7 +71,7 @@ define([
 					var formattedValue = "";
 					if (self.isList) {
 						if (val && val.length > 0) {
-						    formattedValue = "|" + newValues.join("|") + "|";
+						    formattedValue = self.formatStringToArray(val);
 						}	
 					} else {
 						formattedValue = val;
@@ -93,6 +93,15 @@ define([
 		    var regex = /^\|.*\|$/;
 		    
 		    return regex.test(str);
+		},
+		
+		formatStringToArray: function(tags) {
+			var parts = tags.split(',');
+			parts = parts.map(function(m) {
+				return m.trim();
+			});
+			return parts;
+			//return "|" + parts.join("|") + "|";
 		},
 
 		formatPipeString: function(tags) {
