@@ -11,7 +11,7 @@ define([
 		widget: null,
 
         constructor: function (args) {
-            this.value = args.value;
+            this.value = args.element.value;
         },
 
         /**

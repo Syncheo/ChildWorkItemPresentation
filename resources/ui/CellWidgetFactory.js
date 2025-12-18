@@ -98,9 +98,15 @@ define([
 			if (!childElemt.editable) {
 				var WidgetClass = this._nonEditableCellMappings[childElemt.type];
 				if (WidgetClass) {
-					cell = new WidgetClass(childElemt);
+					cell = new WidgetClass({
+						element: childElemt,
+						contextIds: contextIds
+					});
 				} else {
-                    cell = new StandardCell(childElemt); 
+                    cell = new StandardCell({
+						element: childElemt,
+						contextId: contextIds
+					});
                 }
 			} else {
 				// Récupère la classe de widget basée sur le type
