@@ -4,25 +4,69 @@ define([
 	"dijit/_WidgetBase",
 	"dijit/_TemplatedMixin",
 	"dijit/_WidgetsInTemplateMixin",
-	"dijit/Tooltip",
-		"dojo/Deferred",
+	"dojo/Deferred",
 	"dojo/on",
+	"dojo/dom",
 	"dojo/promise/all",
 	"dojo/query",
 	"dojo/date/locale",
 	"dojo/dom-construct",
 	"dojo/dom-style",
+	"dojo/data/ItemFileWriteStore",
+	"dojox/grid/DataGrid",
+	"dojox/grid/cells", // On charge l'espace de nom des cellules	"./XhrHelpers",
 	"./XhrHelpers",
 	"./JazzHelpers",
 	"./ChildRow",
 	"./ChildHeader",
+	"./CellWidgetFactory",
 	"./WorkItemBatchUpdater",
 	"dojo/text!./templates/Presentation.html",
 	"dojo/domReady!"
-], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Tooltip, 
-		Deferred, on, all, query, locale, domConstruct, domStyle, 
-		XHR, JAZZ, ChildRow, ChildHeader, WorkItemBatchUpdater, template) {
+], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, 
+		Deferred, on, dom, all, query, locale, domConstruct, domStyle, ItemFileWriteStore, DataGrid,
+		gridCells, XHR, JAZZ, ChildRow, ChildHeader, CellWidgetFactory, WorkItemBatchUpdater, template) {
+			
+			
+		var FactoryGridCell = declare("fr.syncheo.ewm.grid.FactoryCell", [gridCells.Cell], {
+			// Ces propriétés seront passées via la structure de la grille
+			factory: null,
+			globalCallback: null,
+			
+			// Surcharge de la méthode formatNode (appelée quand la grille dessine la cellule)
+			formatNode: function(inNode, inDatum, inRowIndex) {
+				if (!inDatum) return;
 
+					// 1. Nettoyage si la cellule est redessinée
+					// (Note: pour une gestion mémoire parfaite, on devrait stocker le widget et le détruire)
+					domConstruct.empty(inNode);
+
+					// 2. Extraction des données préparées (voir étape Data Transformation)
+					// inDatum contient ici l'objet complet { element: ..., context: ... }
+					var element = inDatum.element;
+					var contextIds = inDatum.context;
+
+					// 3. Appel de VOTRE Factory existante
+					var cellWidget = this.factory.createCell(
+						element, 
+						contextIds, 
+						this.globalCallback // Le callback bindé (changedOject)
+					);
+					
+					
+					// 4. Rendu dans le noeud de la grille
+					if (cellWidget) {
+						cellWidget.render(inNode);
+						if (cellWidget.startup) {
+							cellWidget.startup();
+						}
+						
+						// IMPORTANT: Stocker le widget sur le noeud pour pouvoir le détruire plus tard si besoin*
+						inNode.widget = cellWidget; 
+					}
+				}
+			});
+			
 	return declare("fr.syncheo.ewm.childitem.presentation.ui.Presentation",
 	[_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
 				wellKnownAttributes : [
@@ -160,11 +204,7 @@ define([
 			var self = this;
 			
 			self.childs = [];
-			
-			//var childsUrl = JAZZ.getApplicationBaseUrl() 
-			//	+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]"
-			//	+ "/children/(type/name|id|summary|state/name|owner/name)";
-				
+							
 			var childsUrl = JAZZ.getApplicationBaseUrl() 
 					+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]" +
 					"/children/(" + self.joinWithPipe(self.visibleAttributes) +  ")";
@@ -300,44 +340,167 @@ define([
 		 * origin request's from client side
 		 * @params allStates: {array} array of objects containing the work item state information
 		 */
-
 		processChilds: function(allChilds, attributeNames, editable) {
-		    var self = this;
-			
-			if (self.childRowWidgets) {
-			    self.childRowWidgets.forEach(function(widget) {
-			        
-			        // 🎯 CORRECTION : Utiliser destroyRecursive pour garantir le nettoyage complet
-			        if (widget && widget.destroyRecursive) { 
-			            widget.destroyRecursive(); 
-			        } else if (widget && widget.destroy) {
-			            // Fallback, mais destroyRecursive est préférable
-			            widget.destroy();
-			        }
-			    });
-			}
-			self.childRowWidgets = []; // Réinitialiser pour stocker les nouvelles
+			var self = this;
 
-			self.normalizeFieldValues(allChilds);
-			
-			// Vider le tbody
-			domConstruct.empty(self.childrenHeader);
+			// 1. Nettoyage de l'existant
+			if (self.grid) {
+			    try { self.grid.destroyRecursive(); } catch(e) {}
+			    self.grid = null;
+			}
 			domConstruct.empty(self.childrenBody);
 			
-			var ch = new ChildHeader(self.visibleAttributes);
-			ch.placeAt(self.childrenHeader);
-			ch.startup();
-			
-			for (var i = 0; i < allChilds.length; i++) {								
-				var cr = new ChildRow({
-					childData: allChilds[i], 
-					onChange: self.changedOject.bind(self)
-				});
-				cr.placeAt(self.childrenBody);
-			    cr.startup();
-				self.childRowWidgets.push(cr);			
+			if (!self.cellFactory) {
+			    self.cellFactory = new CellWidgetFactory();
 			}
-		
+			
+			// 2. Initialisation du Cache (pour stocker les objets que le Store rejette)
+			self._gridDataCache = {};
+			
+			// Fonction utilitaire pour trouver un attribut dans le tableau brut
+			var getAttrSafe = function(rowArray, attrName) {
+			    if (!rowArray) return { "name": attrName, "value": "" };
+			    for (var i = 0; i < rowArray.length; i++) {
+			        if (rowArray[i] && rowArray[i].name === attrName) return rowArray[i];
+			    }
+			    return { "name": attrName, "value": "" };
+			};
+			
+			// 3. Le Formatter : C'est le pont entre le Store et le Cache
+		    var widgetFormatter = function(rowKey, inRowIndex, cell) {
+		        // rowKey est l'ID de la ligne (ex: "row_0")
+		        // cell.field est le nom de la colonne (ex: "State")
+		        var complexData = (self._gridDataCache[rowKey]) ? self._gridDataCache[rowKey][cell.field] : null;
+		        if (!complexData) return "";
+
+		        var containerId = "cw_" + inRowIndex + "_" + cell.field.replace(/\s/g, "_");
+
+		        setTimeout(function() {
+		            var node = dom.byId(containerId);
+		            if (node) {
+		                var widget = self.cellFactory.createCell(
+		                    complexData.element, 
+		                    complexData.context, 
+		                    self.changedOject.bind(self)
+		                );
+		                if (widget) {
+		                    domConstruct.empty(node);
+		                    widget.render(node);
+		                    if (widget.startup) widget.startup();
+		                }
+		            }
+		        }, 10);
+
+		        return '<div id="' + containerId + '" style="min-height:20px;">...</div>';
+		    };
+				
+				
+
+			// 4. Préparation des données (Store + Cache)
+		    var gridItems = [];
+		    for (var i = 0; i < allChilds.length; i++) {
+		        var row = allChilds[i];
+		        if (!row) continue;
+
+		        var rowKey = "row_" + i;
+		        var idAttr = getAttrSafe(row, "Id");
+		        var urlAttr = getAttrSafe(row, "Url");
+		        var typeAttr = getAttrSafe(row, "Type");
+
+		        // Objet "léger" pour le Store (Uniquement des chaînes de caractères)
+		        var storeItem = { 
+		            "uniqueId": rowKey,
+		            "col_id_type": rowKey 
+		        };
+
+		        // Objet "lourd" pour notre cache interne
+		        self._gridDataCache[rowKey] = {};
+
+		        // Contexte partagé pour toute la ligne
+		        var rowContext = {
+		            "id": idAttr,
+		            "paContextId": getAttrSafe(row, "paContextId"),
+		            "contextId": getAttrSafe(row, "contextId")
+		        };
+
+		        // Donnée pour la colonne fixe "Lien"
+		        self._gridDataCache[rowKey]["col_id_type"] = {
+		            "element": { 
+		                "type": "link", 
+		                "value": (typeAttr.value || "") + " " + (idAttr.value || ""), 
+		                "url": urlAttr.value || "" 
+		            },
+		            "context": rowContext
+		        };
+
+		        // Données pour les colonnes dynamiques
+		        for (var j = 0; j < self.visibleAttributes.length; j++) {
+		            var attrTemplate = self.visibleAttributes[j];
+		            var attrName = attrTemplate.name;
+
+		            // On déclare la colonne dans le store
+		            storeItem[attrName] = rowKey;
+
+		            // On prépare l'élément pour le cache
+		            var actualAttr = getAttrSafe(row, attrName);
+		            // Fusion avec le template si nécessaire (pour récupérer editable, etc.)
+		            if (!actualAttr.value && attrTemplate.visible) {
+		                var merged = { "url": urlAttr.value || "" };
+		                for (var key in attrTemplate) { merged[key] = attrTemplate[key]; }
+		                for (var key in actualAttr) { merged[key] = actualAttr[key]; }
+		                actualAttr = merged;
+		            } else {
+		                actualAttr.url = urlAttr.value || "";
+		            }
+
+		            self._gridDataCache[rowKey][attrName] = {
+		                "element": actualAttr,
+		                "context": rowContext
+		            };
+		        }
+		        gridItems.push(storeItem);
+		    }
+
+			// 5. Configuration du Layout (Colonnes de la grille)
+		    var layout = [{
+		        "name": "Lien",
+		        "field": "col_id_type",
+		        "width": "150px",
+		        "formatter": widgetFormatter
+		    }];
+			
+			var forbidden = ["Type", "Id", "Summary", "Url", "contextId", "paContextId"];
+		    for (var k = 0; k < self.visibleAttributes.length; k++) {
+		        var name = self.visibleAttributes[k].name;
+		        if (forbidden.indexOf(name) === -1) {
+		            layout.push({
+		                "name": name,
+		                "field": name,
+		                "width": "auto",
+		                "formatter": widgetFormatter
+		            });
+		        }
+		    }
+				
+			// 6. Création du Store et Rendu final
+		    var store = new ItemFileWriteStore({
+		        "data": { "identifier": "uniqueId", "items": gridItems }
+		    });
+
+		    var gridDiv = domConstruct.create("div", {
+		        "class": "ewm-child-grid",
+		        "style": "width:100%; height:350px;"
+		    }, self.childrenBody);
+
+		    self.grid = new DataGrid({
+		        "store": store,
+		        "structure": layout,
+		        "selectionMode": "none",
+		        "autoHeight": false
+		    }, gridDiv);
+
+		    self.grid.startup();
+	
 		},
 		
 		
