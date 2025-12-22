@@ -816,11 +816,12 @@ define([
 				.filter(function(attr) { return attr.visible; })
 			    .map(function(attr) { return self.deepClone(attr); });
 		},
-		
+				
 		uninitialize: function() {
 			var self = this;
 		    if (self.grid) {
 		        self.grid.destroyRecursive();
+				self.grid = null;
 		    }
 		    // Vide le cache pour libérer la RAM
 		    self._gridDataCache = null;

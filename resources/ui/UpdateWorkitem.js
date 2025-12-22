@@ -82,8 +82,8 @@ define([
 			
 			for (var oslckey in data) {
 				if (oslckey === "rtc_cm:state") continue;
-				var value = data[oslckey].value;
-				var datatype = data[oslckey].datatype;
+				var value = data[oslckey].newValue;
+				var datatype = data[oslckey].element.datatype;
 				if (datatype === "Literal") {
 					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
 				} else if (datatype !== "resource") {
