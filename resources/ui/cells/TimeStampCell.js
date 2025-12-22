@@ -7,25 +7,22 @@
 define([
     "dojo/_base/declare",
     "dijit/form/DateTextBox",
-	"dojo/date/locale",
 	"dijit/_WidgetBase",
-	"../XhrHelpers",
-	"../JazzHelpers",
-	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, DateTextBox, locale, _WidgetBase, 
-	XHR, JAZZ, domConstruct, on){
+	"dojo/dom-construct"
+], function(declare, DateTextBox, _WidgetBase, domConstruct){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.TimeStampCell", 
 		[_WidgetBase], {
 
         element: {},
+		url: null,
         onChange: null,  // callback lors du changement
 		widget: null,
 		
         constructor: function(args){
             this.element = args.element || {};
-            this.onChange = args.onChange || function(){};
+			this.url = args.contextIds.url || "";
+			this.onChange = args.onChange || function(){};
         },
 		
 		
@@ -80,11 +77,18 @@ define([
 						// Retourner la chaîne ISO 8601 complète (avec date et heure)
 						var isoString = newDateValue.toISOString();    
 						self.element.datatype = "http://www.w3.org/2001/XMLSchema#dateTime";
-						self.onChange(isoString, self.element);
-		                        
+						self.onChange({
+							newValue: isoString, 
+							url: self.url,
+							element: self.element
+						});		                        
 					} else if (newDateValue === null || newDateValue === undefined || newDateValue === "") {
 					    // Gérer le cas où l'utilisateur efface la date
-					    self.onChange(null, self.element); 
+						self.onChange({
+							newValue: null,
+							url: self.url,
+							element: self.element
+						});						
 					}
 				})
 			);

@@ -1,3 +1,9 @@
+/**
+ * StandardTimeStampCell.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
 define([
     "dojo/_base/declare",
     "dojo/dom-construct",

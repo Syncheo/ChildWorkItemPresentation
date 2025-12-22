@@ -1,3 +1,9 @@
+/*
+ * LinkCell.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
 define([
     "dojo/_base/declare",
     "dojo/dom-construct",
@@ -9,8 +15,10 @@ define([
         value: null,
         href: null,
 		workitemId: null,
+		type: null,
         domNode: null,
 		widget: null,
+		linkName: null,
 
 		
 		/*
@@ -26,8 +34,10 @@ define([
 		
         constructor: function (args) {
             this.value = args.element.value;
+			this.linkName = args.element.name;
             this.href = args.element.url || "#";
-			this.workitemId = args.contextIds.id;
+			this.workitemId = args.contextIds.id || "";
+			this.type = args.contextIds.type  || "";
         },
 
         /**
@@ -38,6 +48,10 @@ define([
 		
 		render: function (parentTd) {
 			var self = this;
+			
+			var linkLabel = self.value;
+			
+			if (self.linkName === "Id") linkLabel = self.type + " " + self.workitemId;
 			
 			// Conteneur propre
 			this.domNode = domConstruct.create("div", {
@@ -50,14 +64,14 @@ define([
 				try{
 					
 					var anchorNode = domConstruct.create("a", {
-		                innerHTML: self.value || "Lien",
+		                innerHTML: linkLabel || "Lien",
 		                href: self.href
 		            }, this.domNode);
 								
 					self.widget = new ResourceLinkClass({
 					    // Propriétés obligatoires d'après ton inspection :
 					    uri: self.href, 
-					    label: self.value || "Lien",
+					    label: linkLabel || "Lien",
 					    retainLinkText: true,
 					    lazyFetch: true,
 					    isExternalContent: false,
@@ -86,7 +100,7 @@ define([
 			// détecte souvent ces classes automatiquement.
 
 			domConstruct.create("a", {
-				innerHTML: self.value || "Lien",
+				innerHTML: linkLabel || "Lien",
 				href: self.href,
 
 				// C'est cette classe qui déclenche le style et souvent le hover

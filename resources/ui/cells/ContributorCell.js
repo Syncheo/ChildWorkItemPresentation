@@ -1,5 +1,5 @@
 /**
- * CategoryCellBox.js
+ * ContributorCell.js
  * @Author Sany Maamari
  * @Copyright (c) 2025, Syncheo
  */
@@ -11,16 +11,16 @@ define([
     "dojo/store/Memory",
 	"dojo/dom-construct",
 	"dojo/Deferred",
-	"dojo/on",
-	"../XhrHelpers",
-	"../JazzHelpers"
+	"../helpers/XhrHelpers",
+	"../helpers/JazzHelpers"
 ], function(declare, _WidgetBase, ComboBox, Memory, 
-	domConstruct, Deferred, on, XHR, JAZZ){
+	domConstruct, Deferred, XHR, JAZZ){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ContributorCell", 
 		[_WidgetBase], 
 	{
 		_elementData: null,      // Les données de l'attribut de l'élément enfant
+		url: null,
 		contextId: "",      // L'ID de la zone de projet/équipe pour les requêtes
         onChange: null, // Le callback à appeler lors du changement de valeur
 		widget: null,
@@ -36,8 +36,9 @@ define([
 		*/
 		constructor: function (args) {
             this._elementData = args.element || {};
-			this.contextId = args.contextId || {} ; // contextId est un objet {value: ...}
-            this.onChange = args.onChange || function(){};
+			this.contextId = args.contextIds.contextId || "";
+			this.url = args.contextIds.url || "";
+			this.onChange = args.onChange || function(){};
         },
 
         render: function(tdElement){
@@ -88,7 +89,11 @@ define([
 					
 					self.element.datatype = "resource";	
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
-					self.onChange(selectedId, self.element);
+					self.onChange({
+						newValue: selectedId,
+						url: self.url,
+						element: self.element
+					});	
 			    })
 			);
         },

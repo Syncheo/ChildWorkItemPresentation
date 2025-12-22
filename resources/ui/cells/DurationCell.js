@@ -1,5 +1,5 @@
 /**
- * CategoryCellBox.js
+ * DurationCell.js
  * @Author Sany Maamari
  * @Copyright (c) 2025, Syncheo
  */
@@ -9,14 +9,13 @@ define([
     "dijit/form/TextBox",
 	"dijit/_WidgetBase",
 	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, TextBox,
-	_WidgetBase, domConstruct, on){
+], function(declare, TextBox, _WidgetBase, domConstruct){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.DurationCell", 
 		[_WidgetBase], {
 
         element: {},
+		url: null,
         onChange: null,  // callback lors du changement
 		widget: null,
 		
@@ -33,6 +32,7 @@ define([
 		
         constructor: function(args){
             this.element = args.element || {};
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function(){};
         },
 
@@ -63,7 +63,11 @@ define([
 			        var val = self.convertWorkDaysToMilliseconds(evt.target.value);  // valeur réellement saisie
 			        console.log("Nouvelle valeur :", val);
 					self.element.datatype = "http://www.w3.org/2001/XMLSchema#integer";
-					self.onChange(val, self.element);
+					self.onChange({
+						newValue: val,
+						url: self.url,
+						element: self.element
+					});	
 			    })
 			);
 			

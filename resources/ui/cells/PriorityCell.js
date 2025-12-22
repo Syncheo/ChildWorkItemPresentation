@@ -1,5 +1,5 @@
 /**
- * CategoryCellBox.js
+ * PriorityCell.js
  * @Author Sany Maamari
  * @Copyright (c) 2025, Syncheo
  */
@@ -9,17 +9,17 @@ define([
     "dijit/form/ComboBox",
     "dojo/store/Memory",
 	"dijit/_WidgetBase",
-	"../XhrHelpers",
-	"../JazzHelpers",
-	"dojo/dom-construct",
-	"dojo/on"
+	"../helpers/XhrHelpers",
+	"../helpers/JazzHelpers",
+	"dojo/dom-construct"
 ], function(declare, ComboBox, Memory, 
-	_WidgetBase, 
-	XHR, JAZZ, domConstruct, on){
+	_WidgetBase, XHR, JAZZ, domConstruct){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.PriorityCell", 
 		[_WidgetBase], {
+
         element: {},
+		url: null,
 		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
@@ -37,7 +37,8 @@ define([
 		
         constructor: function(args){
             this.element = args.element || {};
-			this.paContextId = args.paContextId || {}
+			this.paContextId = args.contextIds.paContextId || {};
+			this.url = args.contextIds.url || "";			
             this.onChange = args.onChange || function(){};
         },
 
@@ -84,7 +85,12 @@ define([
 
 					self.element.datatype = "resource";					
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
-					self.onChange(selectedId, self.element);
+					
+					self.onChange({
+						newValue: selectedId,
+						url: self.url, 
+						element: self.element
+					});					
 			    })
 			);
         },

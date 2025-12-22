@@ -1,10 +1,13 @@
 /**
  * UpdateWorkitem.js
  * Module de service Dojo pour la mise à jour d'un Work Item via OSLC/PUT.
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
  */
 
+
 define([
-	"./XhrHelpers"
+	"./helpers/XhrHelpers"
 ], function(xhr){
 
     return {
@@ -45,11 +48,13 @@ define([
          * @returns {string} Le XML RDF/OSLC.
          */
         _buildRdfXml: function(dataToUpdate) {
-			var value = dataToUpdate.data.value;
-			var oslckey = dataToUpdate.data.oslckey;
-			var datatype = dataToUpdate.data.datatype;
-			
+			//Object.assign(dataToUpdate[element.oslckey], object);
+			if(!dataToUpdate) return {data: "", url: null };
+			var data = dataToUpdate.data;
+			if(!data) return {data: "", url: null };
 			var url = dataToUpdate.url;
+			if(!url) return {data: "", url: null };
+
 			
 			var xmlDoc = document.implementation.createDocument(this.rdfNs, "rdf:RDF", null	);
 
@@ -73,10 +78,12 @@ define([
 
 			root.appendChild(desc);
 			
-			for (var oslckey in dataToUpdate.data) {
+			
+			
+			for (var oslckey in data) {
 				if (oslckey === "rtc_cm:state") continue;
-				var value = dataToUpdate.data[oslckey].value;
-				var datatype = dataToUpdate.data[oslckey].datatype;
+				var value = data[oslckey].value;
+				var datatype = data[oslckey].datatype;
 				if (datatype === "Literal") {
 					this._addLiteralElement(xmlDoc, desc, this.getNamespace(oslckey), oslckey, value);
 				} else if (datatype !== "resource") {
@@ -107,15 +114,13 @@ define([
 				}
 			}
 			
-			if (dataToUpdate && dataToUpdate.data) {
-				var stateObject = dataToUpdate.data["rtc_cm:state"];
-				
-				if (stateObject && stateObject.value) {
-					var stateValue = stateObject.value;
-			        if (stateValue.trim() !== "") {
-			            url = url + "?_action=" + stateValue;
-			        }
-			    }
+			var stateObject = data["rtc_cm:state"];
+			
+			if (stateObject && stateObject.value) {
+				var stateValue = stateObject.value;
+				if (stateValue.trim() !== "") {
+					url = url + "?_action=" + stateValue;
+				}
 			}
 			var xmlString = new XMLSerializer().serializeToString(xmlDoc);
 			console.log(xmlString);

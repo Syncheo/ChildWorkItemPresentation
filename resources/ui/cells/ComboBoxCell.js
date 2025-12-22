@@ -9,14 +9,14 @@ define([
     "dijit/form/ComboBox",
     "dojo/store/Memory",
 	"dijit/_WidgetBase",
-    "dojo/dom-construct",
-    "dojo/on"
-], function(declare, ComboBox, Memory, _WidgetBase, domConstruct, on) {
+    "dojo/dom-construct"
+], function(declare, ComboBox, Memory, _WidgetBase, domConstruct) {
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.ComboBoxCell", [_WidgetBase], {
 
 		element: {},
-        options: [],       // tableau de valeurs simples ["High", "Medium", "Low"]
+		url: null,
+		options: [],       // tableau de valeurs simples ["High", "Medium", "Low"]
         onChange: null,    // callback quand la valeur change
 		widget: null,
 
@@ -33,6 +33,7 @@ define([
         constructor: function(args){
             this.element = args.element || {};
             this.options = this.element.values || [];
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function() {};
         },
 
@@ -68,7 +69,11 @@ define([
 					if (selectedItem && selectedItem.id) selectedId = selectedItem.id;
 					if (newValue === "") selectedId = ""; 
 					self.element.datatype = "resource";
-					self.onChange(selectedId, self.element);
+					self.onChange({
+						newValue: selectedId,
+						url: self.url,
+						element: self.element
+					});					
 			    })
 			);
 			

@@ -9,12 +9,12 @@ define([
     "dojox/form/CheckedMultiSelect",
     "dojo/store/Memory",
     "dijit/_WidgetBase",
-    "dojo/dom-construct",
-    "dojo/_base/array"
-], function(declare, CheckedMultiSelect, Memory, _WidgetBase, domConstruct, array) {
+    "dojo/dom-construct"
+], function(declare, CheckedMultiSelect, Memory, _WidgetBase, domConstruct) {
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.MultiSelectCell", [_WidgetBase], {
 
 		element: {},
+		url: null,
         enumerations: [],       // tableau de valeurs simples ["High", "Medium", "Low"]
         onChange: null,    // callback quand la valeur change
 		widget: null,
@@ -32,6 +32,7 @@ define([
         constructor: function(args){
             this.element = args.element || {};
             this.enumerations = this.element.values || [];
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function() {};
         },
 
@@ -112,7 +113,11 @@ define([
 					*/
 					self.element.datatype = "resource";					
 
-                    self.onChange(selectedIds, self.element);
+					self.onChange({
+						newValue: selectedIds,
+						url: self.url, 
+						element: self.element
+					});					
 			    })
 			);
 			

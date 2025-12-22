@@ -1,5 +1,5 @@
 /**
- * EditableTextCell.js
+ * TagsTextCell.js
  * @Author Sany Maamari
  * @Copyright (c) 2025, Syncheo
  */
@@ -8,13 +8,13 @@ define([
     "dojo/_base/declare",
     "dijit/form/TextBox",
 	"dijit/_WidgetBase",
-	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, TextBox, _WidgetBase, domConstruct, on) {
+	"dojo/dom-construct"
+], function(declare, TextBox, _WidgetBase, domConstruct) {
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.TagsTextCell", [_WidgetBase], {
 
         element: {},
+		url: null,
         onChange: null, // callback quand la valeur change
 		widget: null,
 
@@ -31,7 +31,8 @@ define([
 		
         constructor: function(args){
 			this.element = args.element || {};
-            this.onChange = args.onChange || function() {};
+			this.url = args.contextIds.url || "";
+			this.onChange = args.onChange || function() {};
         },
 
 		render: function (tdElement) {
@@ -66,11 +67,15 @@ define([
             }
 
 			self.own(
-			    on(self.widget.focusNode, "input", function(evt) {
+			    self.widget.on("input", function(evt) {
 			        var val = self.formatStringToPipe(evt.target.value);  // valeur réellement saisie
 			        console.log("Nouvelle valeur :", val);
 					self.element.datatype = "http://www.w3.org/2001/XMLSchema#string";
-			        self.onChange(self.formatPipeString(val), self.element);
+					self.onChange({
+						newValue: self.formatPipeString(val),
+						url: self.url,
+						element: self.element
+					});
 			    })
 			);
 			

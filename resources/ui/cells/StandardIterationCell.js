@@ -1,10 +1,15 @@
+/**
+ * StandardIterationCell.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
 define([
     "dojo/_base/declare",
     "dojo/dom-construct",
 	"dojo/Deferred",
-	"../XhrHelpers",
-	"../JazzHelpers"
-], function (declare, domConstruct, Deferred, XHR, JAZZ) {
+	"../helpers/XhrHelpers"
+], function (declare, domConstruct, Deferred, XHR) {
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.StandardIterationCell", null, {
 

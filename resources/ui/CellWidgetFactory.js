@@ -1,7 +1,14 @@
+/**
+ * CellWidgetFactory.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
+
+
 define([
     "dojo/_base/declare",
     "dijit/_WidgetBase",
-    
     // Importer toutes les classes de cellules référencées
     "./cells/LinkCell",
 	"./cells/StandardCell",
@@ -105,7 +112,7 @@ define([
 				} else {
                     cell = new StandardCell({
 						element: childElemt,
-						contextId: contextIds
+						contextIds: contextIds
 					});
                 }
 			} else {
@@ -116,9 +123,7 @@ define([
 					// Les arguments de base pour tous les widgets éditables
 					var args = {
 						element: childElemt,
-						paContextId: contextIds.paContextId,
-						workItemId: contextIds.id,
-						contextId: contextIds.contextId,
+						contextIds: contextIds,
 						onChange: callback
 					};
                     
@@ -126,10 +131,7 @@ define([
 	                cell = new WidgetClass(args);
 		                    
                 } else {
-                    // Type non reconnu (équivalent au console.log dans l'original)
-                    console.log("Type de cellule non supporté :", childElemt.type, childElemt);
-                    // Retourner une cellule standard par défaut ou null
-                    cell = new StandardCell("ERROR: " + childElemt.type); 
+                    cell = new StandardCell(childElemt || ""); 
                 }
 			}
 			return cell;

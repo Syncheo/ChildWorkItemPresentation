@@ -1,3 +1,9 @@
+/**
+ * Presentation.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
 
 define([
 	"dojo/_base/declare",
@@ -8,24 +14,21 @@ define([
 	"dojo/on",
 	"dojo/dom",
 	"dojo/promise/all",
-	"dojo/query",
 	"dojo/date/locale",
 	"dojo/dom-construct",
-	"dojo/dom-style",
 	"dojo/data/ItemFileWriteStore",
 	"dojox/grid/DataGrid",
 	"dojox/grid/cells", // On charge l'espace de nom des cellules	"./XhrHelpers",
-	"./XhrHelpers",
-	"./JazzHelpers",
-	"./ChildRow",
-	"./ChildHeader",
+	"./helpers/XmlParserHelper",
+	"./helpers/XhrHelpers",
+	"./helpers/JazzHelpers",
 	"./CellWidgetFactory",
 	"./WorkItemBatchUpdater",
 	"dojo/text!./templates/Presentation.html",
 	"dojo/domReady!"
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, 
-		Deferred, on, dom, all, query, locale, domConstruct, domStyle, ItemFileWriteStore, DataGrid,
-		gridCells, XHR, JAZZ, ChildRow, ChildHeader, CellWidgetFactory, WorkItemBatchUpdater, template) {
+		Deferred, on, dom, all, locale, domConstruct, ItemFileWriteStore, DataGrid,
+		gridCells, XML, XHR, JAZZ, CellWidgetFactory, WorkItemBatchUpdater, template) {
 			
 			
 		var FactoryGridCell = declare("fr.syncheo.ewm.grid.FactoryCell", [gridCells.Cell], {
@@ -80,20 +83,20 @@ define([
 		{name: "Description", 		rest: "formattedDescription", 									visible: false, editable: false,		type: "string"},
 		{name: "Due Date", 			rest: "dueDate", 												visible: false, editable: "configurable",type: "timestamp", oslckey: "rtc_cm:due"},
 		{name: "Estimate", 			rest: "duration", 												visible: false, editable: "configurable",type: "duration", oslckey: "rtc_cm:estimate"},
-		{name: "Filed Against", 	rest: "category/(name|reportableUrl)",							visible: false, editable: "configurable",type: "category", oslckey: "rtc_cm:filedAgainst"},
 		{name: "Found In", 			rest: "foundIn/name", 											visible: false, editable: "configurable",type: "deliverable", oslckey: "rtc_cm:foundIn"},
 		{name: "Id", 				rest: "id", 													visible: true,  editable: false, 		type: "integer"},
 		{name: "Modified By", 		rest: "modifiedBy/name",				 						visible: false, editable: false, 		type: "string"},
 		{name: "Modified Date", 	rest: "modified", 												visible: false, editable: false, 		type: "timestamp"},
-		{name: "Owned By", 			rest: "owner/(name|reportableUrl)",								visible: true,  editable: "configurable",type: "contributor", oslckey: "dcterms:contributor"},
-		{name: "Planned For", 		rest: "target/(name|reportableUrl)", 							visible: false, editable: "configurable",type: "iteration", oslckey: "rtc_cm:plannedFor"},
+		{name: "Filed Against", 	rest: "category/reportableUrl",									visible: false, editable: "configurable",type: "category", oslckey: "rtc_cm:filedAgainst"},
+		{name: "Owned By", 			rest: "owner/reportableUrl",									visible: false, editable: "configurable",type: "contributor", oslckey: "dcterms:contributor"},
+		{name: "Planned For", 		rest: "target/reportableUrl", 									visible: false, editable: "configurable",type: "iteration", oslckey: "rtc_cm:plannedFor"},
 		{name: "Priority", 			rest: "priority/name", 											visible: false, editable: "configurable",type: "priority", oslckey: "oslc_cmx:priority"},
 		{name: "Zone de projet",	rest: "projectArea/name", 										visible: false, editable: false, 		type: "string"},
 		{name: "Resolution", 		rest: "resolution/name", 										visible: false, editable: "configurable",type: "resolution", oslckey: "rtc_cm:resolution"},
 		{name: "Resolution Date",	rest: "resolutionDate", 										visible: false, editable: false, 		type: "timestamp"},
 		{name: "Resolved By", 		rest: "resolver/name", 											visible: false, editable: false, 		type: "string"},
 		{name: "Severity", 			rest: "severity/name", 											visible: false, editable: "configurable",type: "severity", oslckey: "oslc_cmx:severity"},
-		{name: "State", 			rest: "state/name",												visible: true,  editable: "configurable",type: "state", oslckey: "rtc_cm:state"},
+		{name: "State", 			rest: "state/name",												visible: false, editable: "configurable",type: "state", oslckey: "rtc_cm:state"},
 		{name: "Start Date", 		rest: "plannedStartDate", 										visible: false, editable: false,			type: "timestamp"},
 		{name: "Subscribed By", 	rest: "subscriptions/name", 									visible: false, editable: false, 		type: "string"},
 		{name: "Summary", 			rest: "summary", 												visible: true,  editable: "configurable",type: "string", oslckey: "dcterms:title"},
@@ -202,25 +205,20 @@ define([
 		
 		createChildTable: function (workItemId) {
 			var self = this;
-			
 			self.childs = [];
-							
 			var childsUrl = JAZZ.getApplicationBaseUrl() 
 					+ "rpt/repository/workitem?fields=workitem/workItem[id=" + workItemId + "]" +
 					"/children/(" + self.joinWithPipe(self.visibleAttributes) +  ")";
-											
-							
+
 			var childDfd = new Deferred();
 			
-			
-
 			XHR.oslcXmlGetRequest(childsUrl).then(function (data) {
 				var children = data.getElementsByTagName("children");
 				
 				for (var i = 0; i < children.length; i++) {
 					var c = children[i];
 					var child = [];
-					
+
 					for (var j = 0; j < self.visibleAttributes.length; j += 1) {
 						var childAttributes = {};
 						var attribut = self.visibleAttributes[j];
@@ -228,8 +226,19 @@ define([
 						for(var k = 0; k < Object.keys(attribut).length; k++) {
 							childAttributes[Object.keys(attribut)[k]] = attribut[Object.keys(attribut)[k]];
 						}
-														
-						if (childAttributes.rest.includes("allExtensions")) {
+						
+						if (childAttributes.name === "contextId") 			childAttributes.value = XML.getWorkitemContextId(c);
+						else if (childAttributes.name === "paContextId") 	childAttributes.value = XML.getProjectAreaContextId(c);
+						else if (childAttributes.name === "Url") 			childAttributes.value = XML.getWorkitemUrl(c);
+						else if (childAttributes.name === "Type") 			childAttributes.value = XML.getWorkitemType(c);
+						else if (childAttributes.name === "Summary")		childAttributes.value = XML.getWorkitemSummary(c);	
+						else if (childAttributes.name === "Commentaires") 	childAttributes.value = XML.formatLatestCommentToHtml(c);
+						else if (childAttributes.name === "Planned For") 	childAttributes.value = XML.getIterationUrl(c);
+						else if (childAttributes.name === "Filed Against") 	childAttributes.value = XML.getCategoryUrl(c);
+						else if (childAttributes.name === "Owned By")		childAttributes.value = XML.getOwnerUrl(c);
+							
+						else if (childAttributes.rest.includes("allExtensions")) {
+							
 							var paContextItem = child.find(function(item) {
 							    return item.name === "paContextId";
 							});
@@ -237,37 +246,28 @@ define([
 							// On récupère la valeur si l'objet a été trouvé
 							var paContextId = paContextItem ? paContextItem.value : null;
 							if (!paContextId) {
-								paContextId = self.getValueByNameAttribute(c, "projectArea/contextId");
+								paContextId = XML.getProjectAreaContextId(c);
 							}
 							
-							
 							//configuredAttribut.rest = "allExtensions/(displayName|displayValue|key|type|itemValue/*)|customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
-							var extensionMetadata = self.getExtensionMetadata(c, childAttributes.name);
+							var extensionMetadata = XML.getExtensionMetadata(c, childAttributes.name);
 							childAttributes.oslckey = "rtc_ext:" + extensionMetadata.key;
 							childAttributes.isEnumeration = extensionMetadata.isEnumeration;
 							
-							var extension = self.getAllExtensionsDisplayValue(c, childAttributes.name);
+							var extension = XML.getAllExtensionsDisplayValue(c, childAttributes.name);
 							var customAttribute = self.getCustomAttributeData(c, paContextId, extension); //var defaultValue = { value: "", type: "", key: "" };
 							childAttributes.value = extension.value;									
 							childAttributes.type = customAttribute.type;
 							childAttributes.values = customAttribute.enumerations
-
-						} else if (childAttributes.rest.includes("comments")) {
-							childAttributes.value = self.formatLatestCommentToHtml(c);
+	
 						} else if (childAttributes.rest.includes("subscriptions")) {
-							childAttributes.value = self.getArrayOfAttributes(c, "subscriptions", "name");
-						} else if (childAttributes.type === "category" || childAttributes.type === "contributor" 
-							|| childAttributes.type === "iteration") {
-							var parts = childAttributes.rest.split("/");
-							var tag1 = parts[0];
-							childAttributes.value = self.getValueByTag1andTag2(c, tag1, "reportableUrl");
+							childAttributes.value = XML.getArrayOfAttributes(c, "subscriptions", "name");
 						} else if (childAttributes.rest.includes("/")) {
-							childAttributes.value = self.getValueByNameAttribute(c, childAttributes.rest)
+							childAttributes.value = XML.getValueByNameAttribute(c, childAttributes.rest)
 						} else {
 							var elemt = c.getElementsByTagName(childAttributes.rest)[0].textContent
 							childAttributes.value = elemt;
-							if (childAttributes.rest === "itemId") childAttributes.value =  JAZZ.getApplicationBaseUrl() + "resource/itemOid/com.ibm.team.workitem.WorkItem/" + elemt
-							else if (childAttributes.type === "pipearray") childAttributes.value =  self.formatPipeString(elemt);
+							if (childAttributes.type === "pipearray") childAttributes.value =  self.formatPipeString(elemt);
 							else if (childAttributes.type === "duration") childAttributes.value = self.convertMillisecondsToWorkDays(parseInt(elemt));
 							//else if (childAttributes.type === "timestamp") childAttributes.value = self.formatIsoDateForCustomStyle(elemt);					
 						}
@@ -298,15 +298,27 @@ define([
 		},
 
 
-		changedOject: function(object) {
+		changedObject: function(object) {
 		    var self = this;
+			
+			var element = object.element;
+			/*
+			element: {…}​
+			newValue: true​
+			url: "https://jazz-server:9443/ccm/resource/itemOid/com.ibm.team.workitem.WorkItem/_l1UN4b_NEfCIXMPyoWwROA"
+			*/
+			
+			
 		    // 1. Mettre à jour l'objet de suivi des changements
 		    // Assurez-vous que self.changedElements est initialisé comme un objet vide dans le constructeur.
-		    if (!self.changedElements) {
-		        self.changedElements = {};
-		    }
+		    if (!self.changedElements) self.changedElements = {};
+			if (!self.changedElements[object.url]) self.changedElements[object.url] = {};
+			if (!self.changedElements[object.url][element.oslckey]) self.changedElements[object.url][element.oslckey] = {};
+
+			
+			
 		    // Object.assign ajoute/écrase les propriétés de 'object' dans 'self.changedElements'
-		    Object.assign(self.changedElements, object);
+		    Object.assign(self.changedElements[object.url][element.oslckey], object);
 
 		    console.log("Données en cours de modification (changedElements):", self.changedElements);
 		    
@@ -367,31 +379,45 @@ define([
 			};
 			
 			// 3. Le Formatter : C'est le pont entre le Store et le Cache
-		    var widgetFormatter = function(rowKey, inRowIndex, cell) {
-		        // rowKey est l'ID de la ligne (ex: "row_0")
-		        // cell.field est le nom de la colonne (ex: "State")
-		        var complexData = (self._gridDataCache[rowKey]) ? self._gridDataCache[rowKey][cell.field] : null;
-		        if (!complexData) return "";
+		    var widgetFormatter = function(rowValue, inRowIndex, cell) {
+				var item = cell.grid.getItem(inRowIndex);
+				if (!item) return rowValue || "";
+				
+				var rowKey = cell.grid.store.getValue(item, "uniqueId");
+				
+				var rowCache = self._gridDataCache[rowKey];
+				var complexData = rowCache ? rowCache[cell.field] : null;
+					
+				// Si on ne trouve pas de données complexes, on affiche la valeur brute
+				if (!complexData || !complexData.element) {
+					return rowValue || ""; 
+				}
 
-		        var containerId = "cw_" + inRowIndex + "_" + cell.field.replace(/\s/g, "_");
-
-		        setTimeout(function() {
+				var safeFieldName = cell.field.replace(/[^a-z0-9]/gi, '_');
+				var containerId = "w" + self.instanceID + "_cw_" + inRowIndex + "_" + safeFieldName;
+						        
+				setTimeout(function() {
 		            var node = dom.byId(containerId);
-		            if (node) {
-		                var widget = self.cellFactory.createCell(
-		                    complexData.element, 
-		                    complexData.context, 
-		                    self.changedOject.bind(self)
-		                );
-		                if (widget) {
-		                    domConstruct.empty(node);
-		                    widget.render(node);
-		                    if (widget.startup) widget.startup();
-		                }
+					if (node && complexData) {
+						try {
+							var widget = self.cellFactory.createCell(
+		                    	complexData.element, 
+		                    	complexData.context, 
+		                    	self.changedObject.bind(self)
+		               	 	);
+			                if (widget) {
+			                    domConstruct.empty(node);
+			                    widget.render(node);
+			                    if (widget.startup) widget.startup();
+			                }
+						} catch (e) {
+							console.error("Erreur Factory sur " + cell.field, e);
+							node.innerHTML = rowValue || "Erreur";
+						}
 		            }
-		        }, 10);
+		        }, 20);
 
-		        return '<div id="' + containerId + '" style="min-height:20px;">...</div>';
+		        return '<div id="' + containerId + '" style="min-height:20px;"></div>';
 		    };
 				
 				
@@ -402,59 +428,65 @@ define([
 		        var row = allChilds[i];
 		        if (!row) continue;
 
-		        var rowKey = "row_" + i;
 		        var idAttr = getAttrSafe(row, "Id");
 		        var urlAttr = getAttrSafe(row, "Url");
 		        var typeAttr = getAttrSafe(row, "Type");
-
+				var fullIdLabel = (typeAttr.value ? typeAttr.value + " " : "") + (idAttr.value || "");
+				
+				var rowKey = "inst" + self.instanceID + "_row_" + i + "_" + (idAttr.value || i);
+				
 		        // Objet "léger" pour le Store (Uniquement des chaînes de caractères)
-		        var storeItem = { 
-		            "uniqueId": rowKey,
-		            "col_id_type": rowKey 
-		        };
-
-		        // Objet "lourd" pour notre cache interne
+		        var storeItem = { "uniqueId": rowKey };
 		        self._gridDataCache[rowKey] = {};
 
 		        // Contexte partagé pour toute la ligne
 		        var rowContext = {
-		            "id": idAttr,
-		            "paContextId": getAttrSafe(row, "paContextId"),
-		            "contextId": getAttrSafe(row, "contextId")
+		            "id": idAttr.value,
+					"url": urlAttr.value,
+					"type": typeAttr.value,
+		            "paContextId": getAttrSafe(row, "paContextId").value,
+		            "contextId": getAttrSafe(row, "contextId").value
 		        };
-
-		        // Donnée pour la colonne fixe "Lien"
-		        self._gridDataCache[rowKey]["col_id_type"] = {
-		            "element": { 
-		                "type": "link", 
-		                "value": (typeAttr.value || "") + " " + (idAttr.value || ""), 
-		                "url": urlAttr.value || "" 
-		            },
-		            "context": rowContext
-		        };
+				
+				storeItem["Id"] = fullIdLabel;
+				self._gridDataCache[rowKey]["Id"] = {
+				    "element": { 
+				        "type": "link",
+						"name": "Id",
+				        "value": fullIdLabel, 
+				        "url": urlAttr.value || "" 
+				    },
+				    "context": rowContext
+				};
 
 		        // Données pour les colonnes dynamiques
 		        for (var j = 0; j < self.visibleAttributes.length; j++) {
-		            var attrTemplate = self.visibleAttributes[j];
-		            var attrName = attrTemplate.name;
-
-		            // On déclare la colonne dans le store
-		            storeItem[attrName] = rowKey;
-
-		            // On prépare l'élément pour le cache
-		            var actualAttr = getAttrSafe(row, attrName);
-		            // Fusion avec le template si nécessaire (pour récupérer editable, etc.)
-		            if (!actualAttr.value && attrTemplate.visible) {
-		                var merged = { "url": urlAttr.value || "" };
-		                for (var key in attrTemplate) { merged[key] = attrTemplate[key]; }
-		                for (var key in actualAttr) { merged[key] = actualAttr[key]; }
-		                actualAttr = merged;
-		            } else {
-		                actualAttr.url = urlAttr.value || "";
+					var attrTemplate = self.visibleAttributes[j];
+					var attrName = attrTemplate.name;
+					
+					if (attrName === "Id") continue;
+						
+					var actualAttr = getAttrSafe(row, attrName);
+					
+					if (attrName === "Summary") {
+						actualAttr.type = "link";
+						actualAttr.url = urlAttr.value || "";
+					}
+					
+					if (actualAttr.value === undefined || actualAttr.value === null || actualAttr.value === "") {
+		                // On fusionne avec le template pour ne pas perdre le type de widget
+		                var safeAttr = {};
+		                for(var key in attrTemplate) { safeAttr[key] = attrTemplate[key]; }
+		                safeAttr.value = ""; // On force la valeur vide pour l'affichage
+		                actualAttr = safeAttr;
 		            }
 
-		            self._gridDataCache[rowKey][attrName] = {
-		                "element": actualAttr,
+		            actualAttr.url = urlAttr.value || "";
+								
+					storeItem[attrName] = actualAttr.value || "";
+
+					self._gridDataCache[rowKey][attrName] = {
+		                "element": actualAttr, // contient editable, etc.
 		                "context": rowContext
 		            };
 		        }
@@ -462,17 +494,27 @@ define([
 		    }
 
 			// 5. Configuration du Layout (Colonnes de la grille)
-		    var layout = [{
-		        "name": "Lien",
-		        "field": "col_id_type",
-		        "width": "150px",
-		        "formatter": widgetFormatter
-		    }];
+			var layout = [
+		        {
+		            "name": "Id",
+		            "field": "Id",
+		            "width": "120px",
+		            "formatter": widgetFormatter
+		        },
+		        {
+		            "name": "Summary", // On le force en 2e position
+		            "field": "Summary",
+		            "width": "auto", // Vous pouvez mettre "250px" si vous voulez qu'il soit plus large
+		            "formatter": widgetFormatter
+		        }
+		    ];
 			
 			var forbidden = ["Type", "Id", "Summary", "Url", "contextId", "paContextId"];
-		    for (var k = 0; k < self.visibleAttributes.length; k++) {
+		    
+			for (var k = 0; k < self.visibleAttributes.length; k++) {
 		        var name = self.visibleAttributes[k].name;
-		        if (forbidden.indexOf(name) === -1) {
+		        
+				if (forbidden.indexOf(name) === -1) {
 		            layout.push({
 		                "name": name,
 		                "field": name,
@@ -496,7 +538,8 @@ define([
 		        "store": store,
 		        "structure": layout,
 		        "selectionMode": "none",
-		        "autoHeight": false
+		        "autoHeight": false,
+				"id": "grid_inst_" + self.instanceID // On donne un ID unique à la grille elle-même
 		    }, gridDiv);
 
 		    self.grid.startup();
@@ -644,48 +687,14 @@ define([
 			return roundedDays + " d";
 
 		},
-
-		getValueByNameAttribute: function(c, rest) {
-			if (!rest || typeof rest !== "string") return "";
-			
-			var parts = rest.split("/");
-			
-			if (parts.length < 2) return "";
-
-			var tag1 = parts[0];
-			var tag2 = parts[1];
-			if (!c || typeof c.getElementsByTagName !== "function") return "";
-			
-			var elems1 = c.getElementsByTagName(tag1);
-			if (!elems1 || elems1.length === 0) return "";
-
-			var elems2 = elems1[0].getElementsByTagName(tag2);
-			if (!elems2 || elems2.length === 0) return "";
-			
-			var text = elems2[0].textContent;
-			return (typeof text === "string" ? text : "");												
-		},
 		
-		getValueByTag1andTag2: function(c, tag1, tag2) {
-			if (!tag1 || typeof tag1 !== "string") return "";
-			if (!tag2 || typeof tag2 !== "string") return "";
-			
-			if (!c || typeof c.getElementsByTagName !== "function") return "";
-			
-			var elems1 = c.getElementsByTagName(tag1);
-			if (!elems1 || elems1.length === 0) return "";
+		
+		
 
-			var elems2 = elems1[0].getElementsByTagName(tag2);
-			if (!elems2 || elems2.length === 0) return "";
-			
-			var text = elems2[0].textContent;
-			return (typeof text === "string" ? text : "");												
-		},
 
 		getCustomAttributeData: function(workItem, paContextId, extension) {
 			//var defaultValue = { value: "", type: "", key: "" };
-
-		    
+			
 		    var defaultValue = { 
 		        type: extension.type, 
 		        enumerations: null // Retourne null si ce n'est pas une énumération
@@ -763,160 +772,7 @@ define([
 
 			
 		},
-		
-		getExtensionMetadata: function(workItem, targetDisplayName) {
-			var defaultExtensionMetadata = {key: "", type: "", isEnumeration: "", };
-			/*
-			<extensionMetadata>
-			<key>MonEnum</key>
-			<displayName>Mon Enum</displayName>
-			<type>enum de test</type>
-			<isEnumeration>true</isEnumeration>
-			<archived>false</archived>
-			<workItemType/>
-			</extensionMetadata>
-			*/
-			if (!workItem) return defaultValue;
-			var exts = Array.from(workItem.getElementsByTagName("extensionMetadata") || []);
-			var foundExt = exts.find(function(ext) {
-				var displayNameNode = ext.getElementsByTagName("displayName")[0];
-				var displayName = (displayNameNode && displayNameNode.textContent) || null;
-				return displayName === targetDisplayName;
-			});
-			
-			if (foundExt) {
-				defaultExtensionMetadata.type = (foundExt.getElementsByTagName("type")[0] || {}).textContent || "";
-				defaultExtensionMetadata.key  = (foundExt.getElementsByTagName("key")[0]  || {}).textContent || "";
-				defaultExtensionMetadata.isEnumeration  = (foundExt.getElementsByTagName("isEnumeration")[0]  || {}).textContent || "";
-			}
-
-			return defaultExtensionMetadata;
-			
-		},
 				
-		getAllExtensionsDisplayValue: function(workItem, targetDisplayName) {
-			//configuredAttribut.rest = "allExtensions/(displayName|displayValue|key|type|itemValue/reportableUrl)|customAttributes/(identifier|attributeType|projectArea/enumerations/(id|literals/(id|name)))";							
-
-			var defaultValue = { value: "", type: "", key: "" };
-
-		    if (!workItem) return defaultValue;
-		    		
-		    var exts = Array.from(workItem.getElementsByTagName("allExtensions") || []);
-		    
-			var foundExt = exts.find(function(ext) {
-				var displayNameNode = ext.getElementsByTagName("displayName")[0];
-				var displayName = (displayNameNode && displayNameNode.textContent) || null;
-				return displayName === targetDisplayName;
-			});
-			
-			if (foundExt) {
-				var type = (foundExt.getElementsByTagName("type")[0] || {}).textContent || "";
-				var key  = (foundExt.getElementsByTagName("key")[0]  || {}).textContent || "";
-				
-				var value;
-				
-				if (type === "itemValue") {
-				    var itemValueNode = foundExt.getElementsByTagName("itemValue")[0];
-				
-				    if (itemValueNode) {
-				        var reportableUrlNode = itemValueNode.getElementsByTagName("reportableUrl")[0];
-				        value = (reportableUrlNode && reportableUrlNode.textContent) || "";
-				    } else {
-				        value = ""; // Nœud <itemValue> manquant
-				    }
-				
-				} else {
-				    // Pour tous les autres types (chaîne, nombre, etc.), utiliser displayValue
-				    value = (foundExt.getElementsByTagName("displayValue")[0] || {}).textContent || "";
-				}
-
-		        return {
-		            value: value,
-		            type:  type,
-		            key:   key,
-		        };
-		    }
-			
-			
-			return defaultValue;
-		},
-		
-		
-		/**
-		 * Extrait le texte du premier sous-élément trouvé. (Fonction helper basée sur votre code)
-		 * @param {Element} element L'élément parent.
-		 * @param {string} tagName Le nom de la balise enfant à chercher.
-		 * @returns {string | null} Le contenu textuel ou null.
-		 */
-
-		getArrayOfAttributes: function(xmlDoc, node, item) {
-			var self = this;
-			var nodes = Array.from(xmlDoc.getElementsByTagName(node) || []);
-			if (nodes.length === 0) {
-				return "";
-			}
-			
-			var items = nodes.map(function(nodeElmt) {
-				return self.getFirstTagText(nodeElmt, item);
-			});
-			return items.join(", ");
-		},
-				
-
-		getLatestCommentDetails: function(xmlDoc) {
-			var self = this;
-		    var commentsNodes = Array.from(xmlDoc.getElementsByTagName("comments") || []);
-			
-			if (commentsNodes.length === 0) {
-				return { creatorName: "N/A", content: "Aucun commentaire", date: new Date(0) };
-			}
-			
-			var comments = commentsNodes.map(function(commentNode) {
-				var dateString = self.getFirstTagText(commentNode, "creationDate");
-				return {
-					date: new Date(dateString),
-					creatorName: self.getFirstTagText(commentNode.getElementsByTagName("creator")[0], "name"),
-					content: self.getFirstTagText(commentNode, "formattedContent")
-				};
-			});
-
-			comments.sort(function(a, b) {
-				return b.date.getTime() - a.date.getTime();
-			});
-			
-			return comments[0];
-
-		},
-		
-		formatLatestCommentToHtml: function(xmlDoc) {
-			var self = this;
-
-		    var latestComment = self.getLatestCommentDetails(xmlDoc);
-
-		    if (!latestComment.creatorName || latestComment.creatorName === "N/A") {
-		        return "<div>Aucun commentaire trouvé.</div>";
-		    }
-		    
-		    // Mise en forme de la date au format local (Ex: 10/12/2025 14:09)
-		    var dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-		    var formattedDate = latestComment.date.toLocaleDateString('fr-FR', dateOptions);
-
-		    // Construction de la chaîne HTML sur trois lignes
-		    var htmlString = 
-		        "<div>Créateur : <b>" + latestComment.creatorName + "</b></div>" + // Ligne 1 : Créateur en gras
-		        "<div>Date : " + formattedDate + "</div>" +                         // Ligne 2 : Date
-		        "<div>Contenu : " + latestComment.content + "</div>";                // Ligne 3 : Contenu formaté
-
-		    return htmlString;
-		},
-		
-		
-		getFirstTagText: function(element, tagName) {
-		    if (!element) return null;
-		    var n = element.getElementsByTagName(tagName);
-		    return (n && n[0] && n[0].textContent) || null;
-		},
-		
 		splitByComma: function(str) {
 		    if (typeof str !== "string") {
 		        return [];
@@ -933,14 +789,6 @@ define([
 				if (attr.name === key) return attr;
 			} 
 			return null;
-		},
-			
-		keyExists: function (key) {
-			return this.wellKnownAttributes.hasOwnProperty(key)
-		},
-		
-		getWellKnownAttribute: function (key) {
-			return this.wellKnownAttributes[key]
 		},
 		
 		joinWithPipe: function(arr) {
@@ -962,24 +810,21 @@ define([
 			return filteredTags.join(', ');
 		},
 		
-		getCustomAttributDisplayValue: function(workItem, targetDisplayName) {
-			var obj = {}
-		    var exts = workItem.getElementsByTagName("allExtensions");
-		    for (var i = 0; i < exts.length; i++) {
-		        if (exts[i].getElementsByTagName("displayName")[0].textContent === targetDisplayName) {
-					obj.value = exts[i].getElementsByTagName("displayValue")[0].textContent;
-					obj.type = exts[i].getElementsByTagName("type")[0].textContent;
-		            return obj;
-		        }
-		    }
-		    return null;
-		},
-		
 		setVisibleAttributes: function() {
 			var self = this;
 			self.visibleAttributes = self.wellKnownAttributes
 				.filter(function(attr) { return attr.visible; })
 			    .map(function(attr) { return self.deepClone(attr); });
+		},
+		
+		uninitialize: function() {
+			var self = this;
+		    if (self.grid) {
+		        self.grid.destroyRecursive();
+		    }
+		    // Vide le cache pour libérer la RAM
+		    self._gridDataCache = null;
+		    self.inherited(arguments);
 		},
 		
 		deepClone: function(obj) {

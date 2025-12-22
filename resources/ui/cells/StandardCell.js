@@ -1,16 +1,22 @@
+/**
+ * StandardCell.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
 define([
     "dojo/_base/declare",
     "dojo/dom-construct"
 ], function (declare, domConstruct) {
 
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.TagsTextCell", null, {
+    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.StandardCell", null, {
 
         value: null,
         domNode: null,
 		widget: null,
 
         constructor: function (args) {
-            this.value = args.element.value;
+            this.value = args.element.value || "";
         },
 
         /**

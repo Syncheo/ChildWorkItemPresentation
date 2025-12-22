@@ -1,9 +1,15 @@
+/**
+ * WorkitemBatchEditor.js
+ * @Author Sany Maamari
+ * @Copyright (c) 2025, Syncheo
+ */
+
+
 define([
-    "dojo/_base/lang",
     "dojo/promise/all",
     // 🎯 Assurez-vous d'importer votre service UpdateWorkitem
     "./UpdateWorkitem" 
-], function(lang, all, UpdateWorkitem){
+], function(all, UpdateWorkitem){
 
     /**
      * Lance les mises à jour pour tous les Work Items listés dans l'objet de données.
@@ -11,6 +17,8 @@ define([
      * @returns {dojo/promise/Promise} Une promesse qui se résout lorsque toutes les mises à jour sont terminées.
      */
     function processBatchUpdates(batchUpdateData) {
+		//Object.assign(self.changedElements[object.url][element.oslckey], object);
+
         
         var updatePromises = [];
         

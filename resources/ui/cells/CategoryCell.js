@@ -1,5 +1,5 @@
 /**
- * CategoryCellBox.js
+ * CategoryCell.js
  * @Author Sany Maamari
  * @Copyright (c) 2025, Syncheo
  */
@@ -10,18 +10,18 @@ define([
     "dojo/store/Memory",
 	"dojo/Deferred",
 	"dijit/_WidgetBase",
-	"../XhrHelpers",
-	"../JazzHelpers",
-	"dojo/dom-construct",
-	"dojo/on"
+	"../helpers/XhrHelpers",
+	"../helpers/JazzHelpers",
+	"dojo/dom-construct"
 ], function(declare, ComboBox, Memory, Deferred,
 	_WidgetBase, 
-	XHR, JAZZ, domConstruct, on){
+	XHR, JAZZ, domConstruct){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CategoryCell", 
 		[_WidgetBase], {
 
         element: {},
+		url: null,
 		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
@@ -36,10 +36,15 @@ define([
 		};
 		*/
 		
-		
+		/*"id": idAttr.value,
+		"url": urlAttr.value,
+		"paContextId": getAttrSafe(row, "paContextId").value,
+		"contextId": getAttrSafe(row, "contextId").value
+		*/
         constructor: function(args){
             this.element = args.element || {};
-			this.paContextId = args.paContextId || {}
+			this.paContextId = args.contextIds.paContextId || "";
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function(){};
         },
 
@@ -91,7 +96,11 @@ define([
 
 					self.element.datatype = "resource";
 					// 🎯 Étape 3 : Appeler le callback avec l'ID
-					self.onChange(selectedId, self.element);
+					self.onChange({
+						newValue: selectedId,
+						url: self.url,
+						element: self.element
+					});
 			    })
 			);
         },
@@ -101,7 +110,7 @@ define([
 			
 			var ccmUrl = JAZZ.getApplicationBaseUrl() 
 			var categoryUrl =  ccmUrl +
-				"rpt/repository/workitem?fields=workitem/category[contextId=" + self.paContextId.value + "]/(itemId|itemType|name)";
+				"rpt/repository/workitem?fields=workitem/category[contextId=" + self.paContextId + "]/(itemId|itemType|name)";
 			
 			XHR.oslcXmlGetRequest(categoryUrl).then(
 				function (data) {

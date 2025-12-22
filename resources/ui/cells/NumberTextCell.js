@@ -8,13 +8,13 @@ define([
     "dojo/_base/declare",
     "dijit/form/NumberTextBox",
 	"dijit/_WidgetBase",
-	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, NumberTextBox, _WidgetBase, domConstruct, on) {
+	"dojo/dom-construct"
+], function(declare, NumberTextBox, _WidgetBase, domConstruct) {
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.NumberTextCell", [_WidgetBase], {
 
         element: {},
+		url: null,
         onChange: null, // callback quand la valeur change
 		widget: null,
 		isList: false,
@@ -32,6 +32,7 @@ define([
 		
         constructor: function(args){
 			this.element = args.element || {};
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function() {};
         },
 
@@ -79,7 +80,11 @@ define([
                         console.log("Valeur entière validée :", newNumericValue);
 						self.element.datatype = "http://www.w3.org/2001/XMLSchema#integer";					
 
-						self.onChange(newNumericValue, self.element);
+						self.onChange({
+							newValue: newNumericValue,
+							url: self.url, 
+							element: self.element
+						});						
                     } else {
                         console.warn("Saisie invalide ignorée");
                     }

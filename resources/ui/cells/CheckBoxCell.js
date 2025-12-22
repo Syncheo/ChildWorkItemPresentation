@@ -8,14 +8,14 @@ define([
     "dojo/_base/declare",
     "dijit/form/CheckBox",
 	"dijit/_WidgetBase",
-	"dojo/dom-construct",
-	"dojo/on"
-], function(declare, CheckBox, _WidgetBase, domConstruct, on){
+	"dojo/dom-construct"
+], function(declare, CheckBox, _WidgetBase, domConstruct){
 
     return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.CheckBoxCell", 
 		[_WidgetBase], {
 
         element: {},
+		url: null,
 		paContextId: "",
         onChange: null,  // callback lors du changement
 		widget: null,
@@ -32,7 +32,8 @@ define([
 		
         constructor: function(args){
             this.element = args.element || {};
-			this.paContextId = args.paContextId || {}
+			this.paContextId = args.contextIds.paContextId || "";
+			this.url = args.contextIds.url || "";
             this.onChange = args.onChange || function(){};
         },
 
@@ -58,7 +59,11 @@ define([
 			    self.widget.on("change", function(isChecked) {
 					self.element.datatype = "http://www.w3.org/2001/XMLSchema#boolean";					
 
-					self.onChange(isChecked, self.element); 
+					self.onChange({
+						newValue: isChecked,
+						url: self.url,
+						element: self.element
+					});
 			    })
 			);
 			
