@@ -5,22 +5,20 @@
  */
 
 define([
-    "dojo/_base/declare",
-    "dojo/dom-construct",
+	"dojo/_base/declare",
+	"dojo/dom-construct",
 	"dojo/_base/lang"
 ], function (declare, domConstruct, lang) {
-
-    return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.LinkCell", null, {
-
-        value: null,
-        href: null,
+	return declare("fr.syncheo.ewm.childitem.presentation.ui.cells.LinkCell", null, {
+		
+		value: null,
+		href: null,
 		workitemId: null,
 		type: null,
-        domNode: null,
+		domNode: null,
 		widget: null,
 		linkName: null,
 
-		
 		/*
 		var args = {
 			element: childElemt,
@@ -30,20 +28,19 @@ define([
 			onChange: callback
 		};
 		*/
-		
-		
-        constructor: function (args) {
-            this.value = args.element.value;
+
+		constructor: function (args) {
+			this.value = args.element.value;
 			this.linkName = args.element.name;
-            this.href = args.element.url || "#";
+			this.href = args.element.url || "#";
 			this.workitemId = args.contextIds.id || "";
 			this.type = args.contextIds.type  || "";
-        },
+		},
 
-        /**
-         * Crée un lien <a> non-éditable occupant 100% de la cellule.
-         * @param {HTMLElement} parentTd
-         */
+		/**
+		 * Crée un lien <a> non-éditable occupant 100% de la cellule.
+		 * @param {HTMLElement} parentTd
+		*/
 		
 		
 		render: function (parentTd) {
@@ -57,17 +54,17 @@ define([
 			this.domNode = domConstruct.create("div", {
 				style: "width:100%; box-sizing:border-box; padding:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
 			}, parentTd);
-			
+
 			var ResourceLinkClass = lang.getObject("jazz.ui.ResourceLink");
 
 			if (ResourceLinkClass) {
 				try{
 					
 					var anchorNode = domConstruct.create("a", {
-		                innerHTML: linkLabel || "Lien",
-		                href: self.href
-		            }, this.domNode);
-								
+						innerHTML: linkLabel || "Lien",
+						href: self.href
+					}, this.domNode);
+			
 					self.widget = new ResourceLinkClass({
 					    // Propriétés obligatoires d'après ton inspection :
 					    uri: self.href, 
